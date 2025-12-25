@@ -11,6 +11,13 @@ const app: Application = express();
 app.use(cors({ origin: config.cors.origin }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Root endpoint
+app.get("/", (_req: Request, res: Response) => {
+  res.json({
+    message: "CrowdStudio API is running!",
+    status: "ok"
+  });
+});
 
 app.use(healthRoutes);
 app.use(authRoutes);
