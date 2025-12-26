@@ -9,7 +9,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        sync: false
+        value: "*"
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
