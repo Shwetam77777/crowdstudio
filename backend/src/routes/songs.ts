@@ -57,6 +57,48 @@ router.get("/songs/top", async (_req: Request, res: Response) => {
   }
 });
 
+// Get producer's own songs
+router.get("/songs/my", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+
+    const songs = await prisma.song.findMany({
+      where: {
+        ownerId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        audioUrl: true,
+        createdAt: true,
+        _count: {
+          select: {
+            likes: true,
+          },
+        },
+      },
+    });
+
+    const formattedSongs = songs.map((song) => ({
+      id: song.id,
+      title: song.title,
+      description: song.description,
+      audioUrl: song.audioUrl,
+      likes: song._count.likes,
+      createdAt: song.createdAt,
+    }));
+
+    res.json(formattedSongs);
+  } catch (error) {
+    console.error("Error fetching my songs:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post(
   "/songs",
   requireAuth,
