@@ -1,11 +1,11 @@
 import React from "react";
 import { SongCard } from "@/components/SongCard";
-import { songsAPI } from "@/lib/api";
+import { Song, songsAPI } from "@/lib/api";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  let songs = [];
+  let songs: Song[] = [];
   let error = null;
 
   try {
