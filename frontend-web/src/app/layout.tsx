@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 import { Navbar } from "@/components/Navbar";
 import "./globals.css";
 
@@ -18,8 +19,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <AuthProvider>
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

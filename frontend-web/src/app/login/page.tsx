@@ -1,126 +1,101 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { authAPI } from "@/lib/api";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("audience");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      let response;
-      if (isLogin) {
-        response = await authAPI.login(email, password);
-      } else {
-        response = await authAPI.register(email, password, role);
-      }
-
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      router.push("/");
+      await login(email, password);
     } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          "An error occurred. Please try again."
-      );
+      setError(err.message || "Login failed");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold mb-6 text-center">
-            {isLogin ? "Sign In" : "Sign Up"}
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+        <div>
+          <h2 className="text-center text-4xl font-bold mb-2">
+            Welcome Back
           </h2>
+          <p className="text-center text-gray-600 dark:text-gray-400">
+            Sign in to your CrowdStudio account
+          </p>
+        </div>
 
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-100 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-100 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email
+              </label>
               <input
+                id="email"
+                name="email"
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label htmlFor="password" className="block text-sm font-medium mb-2">
                 Password
               </label>
               <input
+                id="password"
+                name="password"
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700"
                 placeholder="••••••••"
               />
             </div>
+          </div>
 
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Account Type
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                >
-                  <option value="audience">Audience</option>
-                  <option value="producer">Producer</option>
-                </select>
-              </div>
-            )}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
+          </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 px-4 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError("");
-                }}
-                className="text-blue-500 hover:text-blue-600 font-medium"
-              >
-                {isLogin ? "Sign Up" : "Sign In"}
-              </button>
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{" "}
+              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Create one
+              </Link>
             </p>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
