@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-// Force Vercel rebuild with latest changes
+// Force Vercel rebuild - v2
 const nextConfig = {
   reactStrictMode: true,
   eslint: {
