@@ -75,3 +75,55 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Custom Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent;
+}
+
+/* Glass Morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Card Hover Effects */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+}

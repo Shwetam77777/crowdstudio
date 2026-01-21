@@ -8,6 +8,8 @@ interface CreateSongBody {
   title: string;
   description?: string;
   audioUrl?: string;
+  lyrics?: string;
+  genre?: string;
 }
 
 router.get("/songs/top", async (_req: Request, res: Response) => {
@@ -24,6 +26,9 @@ router.get("/songs/top", async (_req: Request, res: Response) => {
         title: true,
         description: true,
         audioUrl: true,
+        lyrics: true,
+        genre: true,
+        aiGenerated: true,
         createdAt: true,
         owner: {
           select: {
@@ -34,6 +39,7 @@ router.get("/songs/top", async (_req: Request, res: Response) => {
         _count: {
           select: {
             likes: true,
+            comments: true,
           },
         },
       },
@@ -44,9 +50,13 @@ router.get("/songs/top", async (_req: Request, res: Response) => {
       title: song.title,
       description: song.description,
       audioUrl: song.audioUrl,
+      lyrics: song.lyrics,
+      genre: song.genre,
+      aiGenerated: song.aiGenerated,
       ownerEmail: song.owner.email,
       ownerId: song.owner.id,
       likeCount: song._count.likes,
+      commentCount: song._count.comments,
       createdAt: song.createdAt,
     }));
 
@@ -78,6 +88,7 @@ router.get("/songs/my", requireAuth, async (req: Request, res: Response) => {
         _count: {
           select: {
             likes: true,
+            comments: true,
           },
         },
       },
@@ -89,6 +100,7 @@ router.get("/songs/my", requireAuth, async (req: Request, res: Response) => {
       description: song.description,
       audioUrl: song.audioUrl,
       likes: song._count.likes,
+      comments: song._count.comments,
       createdAt: song.createdAt,
     }));
 
@@ -104,7 +116,7 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const { title, description, audioUrl } = req.body as CreateSongBody;
+      const { title, description, audioUrl, lyrics, genre } = req.body as CreateSongBody;
 
       if (!title) {
         res.status(400).json({ error: "Title is required" });
@@ -116,6 +128,9 @@ router.post(
           title,
           description: description || null,
           audioUrl: audioUrl || null,
+          lyrics: lyrics || null,
+          genre: genre || null,
+          aiGenerated: false,
           ownerId: req.user!.userId,
         },
         include: {
@@ -128,6 +143,7 @@ router.post(
           _count: {
             select: {
               likes: true,
+              comments: true,
             },
           },
         },
@@ -138,9 +154,13 @@ router.post(
         title: song.title,
         description: song.description,
         audioUrl: song.audioUrl,
+        lyrics: song.lyrics,
+        genre: song.genre,
+        aiGenerated: song.aiGenerated,
         ownerEmail: song.owner.email,
         ownerId: song.owner.id,
         likeCount: song._count.likes,
+        commentCount: song._count.comments,
         createdAt: song.createdAt,
       });
     } catch (error) {
@@ -166,6 +186,7 @@ router.get("/songs/:id", async (req: Request, res: Response) => {
         _count: {
           select: {
             likes: true,
+            comments: true,
           },
         },
       },
@@ -181,9 +202,13 @@ router.get("/songs/:id", async (req: Request, res: Response) => {
       title: song.title,
       description: song.description,
       audioUrl: song.audioUrl,
+      lyrics: song.lyrics,
+      genre: song.genre,
+      aiGenerated: song.aiGenerated,
       ownerEmail: song.owner.email,
       ownerId: song.owner.id,
       likeCount: song._count.likes,
+      commentCount: song._count.comments,
       createdAt: song.createdAt,
     });
   } catch (error) {

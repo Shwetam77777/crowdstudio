@@ -16,6 +16,7 @@ model User {
 
   songs Song[]
   likes Like[]
+  comments Comment[]
 }
 
 model Song {
@@ -23,11 +24,15 @@ model Song {
   title String
   description String?
   audioUrl String?
+  lyrics String?      // AI-generated or user-provided lyrics
+  genre String?       // Music genre
+  aiGenerated Boolean @default(false)  // Track if song was AI-generated
   ownerId Int
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   likes Like[]
+  comments Comment[]
 }
 
 model Like {
@@ -38,4 +43,15 @@ model Like {
   song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@unique([userId, songId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  rating    Int?     // Optional rating 1-5 stars
+  userId    Int
+  songId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

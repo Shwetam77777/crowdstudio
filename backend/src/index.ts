@@ -5,6 +5,8 @@ import { prisma } from "./db";
 import healthRoutes from "./routes/health";
 import authRoutes from "./routes/auth";
 import songsRoutes from "./routes/songs";
+import aiRoutes from "./routes/ai";
+import commentsRoutes from "./routes/comments";
 
 const app: Application = express();
 
@@ -22,6 +24,8 @@ app.get("/", (_req: Request, res: Response) => {
 app.use(healthRoutes);
 app.use(authRoutes);
 app.use(songsRoutes);
+app.use(aiRoutes);
+app.use(commentsRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Route not found" });

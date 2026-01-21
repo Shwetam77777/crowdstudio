@@ -33,10 +33,27 @@ export interface Song {
   title: string;
   description?: string;
   audioUrl?: string;
+  lyrics?: string;
+  genre?: string;
+  aiGenerated?: boolean;
   ownerEmail: string;
   ownerId: number;
   likeCount: number;
+  commentCount?: number;
   createdAt: string;
+}
+
+export interface Comment {
+  id: number;
+  content: string;
+  rating?: number;
+  userId: number;
+  songId: number;
+  createdAt: string;
+  user: {
+    id: number;
+    email: string;
+  };
 }
 
 export interface TopSongsResponse {
@@ -80,18 +97,65 @@ export const songsAPI = {
   createSong: async (
     title: string,
     description?: string,
-    audioUrl?: string
+    audioUrl?: string,
+    lyrics?: string,
+    genre?: string
   ): Promise<Song> => {
     const response = await apiClient.post<Song>("/songs", {
       title,
       description,
       audioUrl,
+      lyrics,
+      genre,
     });
     return response.data;
   },
 
   likeSong: async (songId: number): Promise<void> => {
     await apiClient.post(`/songs/${songId}/like`);
+  },
+};
+
+export const aiAPI = {
+  generateSong: async (
+    lyrics: string,
+    genre?: string,
+    title?: string
+  ): Promise<Song> => {
+    const response = await apiClient.post<Song>("/ai/generate", {
+      lyrics,
+      genre,
+      title,
+    });
+    return response.data;
+  },
+};
+
+export const commentsAPI = {
+  getComments: async (songId: number): Promise<Comment[]> => {
+    const response = await apiClient.get<{ comments: Comment[] }>(
+      `/songs/${songId}/comments`
+    );
+    return response.data.comments;
+  },
+
+  createComment: async (
+    songId: number,
+    content: string,
+    rating?: number
+  ): Promise<Comment> => {
+    const response = await apiClient.post<Comment>(
+      `/songs/${songId}/comments`,
+      {
+        content,
+        rating,
+      }
+    );
+    return response.data;
+  },
+
+  deleteComment: async (commentId: number): Promise<void> => {
+    await apiClient.delete(`/comments/${commentId}`);
   },
 };
 
