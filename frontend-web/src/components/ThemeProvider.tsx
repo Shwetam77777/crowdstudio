@@ -22,7 +22,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedTheme =
       (localStorage.getItem("theme") as ThemeType) || "dark";
     setThemeState(savedTheme);
+    
+    // Apply theme to document
     document.documentElement.setAttribute("data-theme", savedTheme);
+    
+    // Also apply as class for better CSS support
+    document.documentElement.classList.remove("light", "dark", "neon");
+    document.documentElement.classList.add(savedTheme);
+    
+    // Update meta theme-color
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      const colors = {
+        light: "#ffffff",
+        dark: "#0f0f23",
+        neon: "#000000"
+      };
+      metaTheme.setAttribute("content", colors[savedTheme]);
+    }
   }, []);
 
   const setTheme = (newTheme: ThemeType) => {
@@ -30,6 +47,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof window !== 'undefined') {
       localStorage.setItem("theme", newTheme);
       document.documentElement.setAttribute("data-theme", newTheme);
+      
+      // Apply as class
+      document.documentElement.classList.remove("light", "dark", "neon");
+      document.documentElement.classList.add(newTheme);
+      
+      // Update meta theme-color
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        const colors = {
+          light: "#ffffff",
+          dark: "#0f0f23",
+          neon: "#000000"
+        };
+        metaTheme.setAttribute("content", colors[newTheme]);
+      }
     }
   };
 

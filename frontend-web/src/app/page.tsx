@@ -3,8 +3,9 @@ import Link from "next/link";
 import { SongCard } from "@/components/SongCard";
 import { Song, songsAPI } from "@/lib/api";
 
-export const revalidate = 60;
+export const revalidate = 0;
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default async function Home() {
   let songs: Song[] = [];
@@ -21,15 +22,15 @@ export default async function Home() {
   const totalComments = songs.reduce((sum, song) => sum + (song.commentCount || 0), 0);
 
   return (
-    <div className="min-h-screen py-12 px-4 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+    <div className="min-h-screen py-12 px-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-indigo-950">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            🎵 Global Leaderboard
+        <div className="mb-12 text-center animate-fade-in">
+          <h1 className="text-6xl md:text-7xl font-black mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+            Discover AI Music
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Discover and support amazing AI-generated music from our community
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Explore amazing AI-generated songs created by our community
           </p>
 
           {/* Stats Bar */}
@@ -62,8 +63,8 @@ export default async function Home() {
 
           {/* CTA Button */}
           <Link href="/ai-generate">
-            <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-xl">
-              ✨ Create AI Music
+            <button className="px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white rounded-2xl font-black text-xl hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-2xl hover:shadow-3xl">
+              🎵 Create Your Song
             </button>
           </Link>
         </div>
