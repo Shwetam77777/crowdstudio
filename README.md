@@ -75,7 +75,57 @@ The request/response shape in `src/routes/aiExport.ts` is written generically
 (`{ audioUrl }` response) — you'll need to adjust the request payload to match
 whichever provider you pick, since each has a different API contract.
 
-## What was fixed vs. the two source projects
+## Tests
+
+Both apps have real tests — not placeholders.
+
+```bash
+cd backend && npm test    # 19 tests: auth validation, JWT rejection, like
+                           # toggling, 404/rate-limit/malformed-JSON handling
+cd frontend && npm test   # 13 tests: error-message extraction, auth
+                           # hydration race condition, RequireAuth redirect
+                           # timing
+```
+
+Backend tests mock Prisma (fast, no DB needed locally). CI additionally
+spins up a real Postgres service and runs `prisma db push` against it to
+catch schema drift the mocked tests can't.
+
+## CI/CD
+
+`.github/workflows/ci.yml` runs on every push/PR to `main`:
+- **backend**: typecheck → sync schema to a real Postgres service → test → build
+- **frontend**: lint → test → build
+
+Push this repo to GitHub and the workflow runs automatically — no extra setup.
+
+Once you've run `npx prisma migrate dev` locally at least once (creating a
+committed `backend/prisma/migrations/` folder), swap the CI's `prisma db push`
+step for `prisma migrate deploy` so CI validates your actual migration
+history instead of just pushing the current schema.
+
+## Error & load handling
+
+- **Rate limiting**: general API (300 req/15min), auth routes (20/15min,
+  stricter — this is the endpoint most exposed to brute-force attempts),
+  writes like posting tracks/comments (30/5min).
+- **Request size cap**: JSON bodies capped at 256kb to block oversized-payload abuse.
+- **Helmet**: standard security headers on every response.
+- **Central error handler**: maps Prisma errors (unique-constraint conflicts,
+  not-found) to clean 4xx JSON instead of leaking raw DB errors; malformed
+  JSON bodies get a clean 400 instead of crashing the request.
+- **Graceful shutdown**: on SIGTERM/SIGINT, finishes in-flight requests and
+  closes the DB connection pool cleanly before exiting (important for
+  zero-downtime deploys on Render).
+- **Frontend error boundary**: a render crash anywhere in the app shows a
+  recoverable "something broke, reload" screen instead of a blank white page.
+- **Socket reconnection**: the WebSocket client auto-reconnects (up to 10
+  attempts with backoff) and re-authenticates on reconnect; the navbar shows
+  "reconnecting…" instead of silently showing a stale/zero online count.
+- **Request timeouts**: frontend API calls time out after 10s instead of
+  hanging forever on a stalled connection.
+
+
 
 **From CrowdStudio (Next.js + Express):**
 - `typescript.ignoreBuildErrors` / `eslint.ignoreDuringBuilds` were silently
