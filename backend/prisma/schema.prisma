@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String
+  displayName   String?
+  bio           String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tracks        Track[]
+  likes         Like[]
+  comments      Comment[]
+
+  @@index([username])
+}
+
+model Track {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  // Jam parameters captured from the live Tone.js session so the track
+  // can be re-synthesized / replayed exactly, instead of a static file.
+  jamConfig     Json
+  // Populated only if the user chose a real AI export (see aiExport route).
+  aiExportUrl   String?
+  aiExportStatus String   @default("none") // none | pending | ready | failed
+  durationSec   Int       @default(0)
+  playCount     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  likes         Like[]
+  comments      Comment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@index([trackId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([trackId])
+}

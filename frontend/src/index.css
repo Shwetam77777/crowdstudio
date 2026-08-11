@@ -1,0 +1,21 @@
+/* @import MUST come before any other rule (including @tailwind) per the
+   CSS spec — the old present-mind-sound app had this reversed, which
+   caused browsers to silently drop the font import in production and the
+   Orbitron display font never actually loaded. Fixed here. */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-white font-mono antialiased;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-surface/60 backdrop-blur-md border border-white/10;
+  }
+}

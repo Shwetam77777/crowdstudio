@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (typecheck, test, build)
+    runs-on: ubuntu-latest
+
+    # A real Postgres service so `prisma generate` + tests run against the
+    # real schema, not just mocks — catches schema drift the mocked unit
+    # tests wouldn't.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: crowdjam
+          POSTGRES_PASSWORD: crowdjam
+          POSTGRES_DB: crowdjam_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://crowdjam:crowdjam@localhost:5432/crowdjam_test
+      JWT_SECRET: ci-test-secret-not-for-production
+      CORS_ORIGIN: http://localhost:5173
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Sync schema to test database
+        # Uses db push (not migrate deploy) so CI works even before any
+        # migration files exist yet. Once you run `prisma migrate dev`
+        # locally and commit the generated migrations/ folder, switch this
+        # to `npx prisma migrate deploy` for a real migration history check.
+        run: npx prisma db push --skip-generate
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  frontend:
+    name: Frontend (lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_BASE: http://localhost:4000

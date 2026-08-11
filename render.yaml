@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: crowdjam-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRY
+        value: 7d
+      # Set this to the real deployed frontend URL after first deploy —
+      # a wildcard "*" origin is fine for local testing only, never prod.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: AI_EXPORT_PROVIDER
+        sync: false
+      - key: AI_EXPORT_API_KEY
+        sync: false
+      - key: AI_EXPORT_ENDPOINT
+        sync: false
+
+  # NOTE: the old crowdstudio render.yaml only defined the backend service —
+  # the frontend was never actually deployed by this config. Fixed here.
+  - type: web
+    name: crowdjam-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      # Set to the real deployed backend URL (e.g. https://crowdjam-backend.onrender.com)
+      - key: VITE_API_BASE
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: crowdjam-db
+    plan: free
+    databaseName: crowdjam
+    user: crowdjam

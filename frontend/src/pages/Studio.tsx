@@ -1,0 +1,151 @@
+import { useEffect, useState } from "react";
+import { useJamEngine } from "../hooks/useJamEngine";
+import { usePresence } from "../hooks/usePresence";
+import { getSocket } from "../lib/socket";
+import { api, apiErrorMessage } from "../lib/api";
+
+export default function Studio() {
+  const { isPlaying, params, start, stop, setParams } = useJamEngine();
+  const presence = usePresence();
+  const [title, setTitle] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const socket = getSocket();
+    socket.emit("join-jam-room");
+    return () => {
+      socket.emit("leave-jam-room");
+    };
+  }, []);
+
+  async function handleSave() {
+    if (!title.trim()) {
+      setSaveError("Give your jam a title first");
+      return;
+    }
+    setSaveState("saving");
+    setSaveError(null);
+    try {
+      await api.post("/tracks", { title, jamConfig: params, durationSec: 0 });
+      setSaveState("saved");
+    } catch (err) {
+      setSaveState("error");
+      setSaveError(apiErrorMessage(err, "Could not save track"));
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-6 py-10">
+      <h1 className="mb-2 font-display text-3xl text-primary">Jam Studio</h1>
+      <p className="mb-8 text-sm text-muted">
+        {presence.inJamRoom} people jamming right now (live, via WebSocket)
+      </p>
+
+      <div className="glass mb-6 rounded-xl p-6">
+        <button
+          onClick={() => (isPlaying ? stop() : start())}
+          className="mb-6 w-full rounded-lg bg-primary py-3 font-display text-lg text-black"
+        >
+          {isPlaying ? "STOP" : "START JAM"}
+        </button>
+
+        <Slider
+          label="Tempo"
+          value={params.tempo}
+          min={60}
+          max={160}
+          onChange={(v) => setParams({ tempo: v })}
+          suffix="bpm"
+        />
+        <Slider
+          label="Filter cutoff"
+          value={params.filterCutoff}
+          min={200}
+          max={8000}
+          onChange={(v) => setParams({ filterCutoff: v })}
+          suffix="Hz"
+        />
+        <Slider
+          label="Reverb"
+          value={Math.round(params.reverbWet * 100)}
+          min={0}
+          max={100}
+          onChange={(v) => setParams({ reverbWet: v / 100 })}
+          suffix="%"
+        />
+
+        <div className="mt-4">
+          <label className="mb-1 block text-sm text-muted">Scale</label>
+          <select
+            className="w-full rounded border border-white/20 bg-black/30 px-3 py-2"
+            value={params.scale}
+            onChange={(e) => setParams({ scale: e.target.value as typeof params.scale })}
+          >
+            <option value="pentatonic">Pentatonic</option>
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="glass rounded-xl p-6">
+        <label className="mb-1 block text-sm text-muted">Track title</label>
+        <input
+          className="mb-3 w-full rounded border border-white/20 bg-black/30 px-3 py-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="My late-night jam"
+        />
+        {saveError && <p className="mb-3 text-sm text-red-300">{saveError}</p>}
+        <button
+          onClick={handleSave}
+          disabled={saveState === "saving"}
+          className="w-full rounded border border-primary py-2 text-primary disabled:opacity-50"
+        >
+          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Save to feed"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  suffix: string;
+}) {
+  return (
+    <div className="mb-4">
+      <div className="mb-1 flex justify-between text-sm text-muted">
+        <span>{label}</span>
+        <span>
+          {value}
+          {suffix}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          onChange(v);
+          getSocket().emit("jam-param-change", { param: label, value: v });
+        }}
+        className="w-full accent-primary"
+      />
+    </div>
+  );
+}
