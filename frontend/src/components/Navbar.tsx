@@ -21,6 +21,9 @@ export function Navbar() {
         {user ? (
           <>
             <Link to="/studio" className="hover:text-primary">Jam Studio</Link>
+            <Link to={`/profile/${user.username}`} className="hover:text-primary">
+              {user.displayName ?? user.username}
+            </Link>
             <button
               onClick={() => {
                 logout();

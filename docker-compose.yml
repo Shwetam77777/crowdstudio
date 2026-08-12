@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: crowdjam
+      POSTGRES_PASSWORD: crowdjam
+      POSTGRES_DB: crowdjam
+    ports:
+      - "5432:5432"
+    volumes:
+      - crowdjam_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crowdjam"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://crowdjam:crowdjam@db:5432/crowdjam
+      JWT_SECRET: dev-only-secret-change-me
+      JWT_EXPIRY: 7d
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "4000:4000"
+    # Applies the Prisma schema to the DB on every container start — fine
+    # for local dev; use real migrations (`prisma migrate deploy`) in prod.
+    command: sh -c "npx prisma db push --skip-generate && npm start"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: http://localhost:4000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  crowdjam_db_data:

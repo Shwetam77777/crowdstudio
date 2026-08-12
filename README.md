@@ -27,7 +27,25 @@ found in both during audit.
 
 ## Local setup
 
-### Backend
+### Option A — Docker Compose (easiest, one command)
+```bash
+docker compose up --build
+```
+This starts Postgres, runs the backend (auto-applies the Prisma schema via
+`prisma db push` on boot), and serves the frontend — all three together.
+- Frontend: http://localhost:5173
+- Backend: http://localhost:4000
+- Postgres: localhost:5432 (user/pass/db: `crowdjam`)
+
+Edit the `JWT_SECRET` in `docker-compose.yml` before using this for anything
+beyond local dev. (Note: this Docker setup wasn't build-tested inside the
+environment this project was generated in — Docker wasn't available there —
+so double check `docker compose up --build` on your machine before relying
+on it for a demo.)
+
+### Option B — run backend and frontend separately
+
+#### Backend
 ```bash
 cd backend
 cp .env.example .env      # fill in DATABASE_URL and JWT_SECRET
@@ -36,7 +54,7 @@ npx prisma migrate dev    # creates tables
 npm run dev                # http://localhost:4000
 ```
 
-### Frontend
+#### Frontend
 ```bash
 cd frontend
 cp .env.example .env.local
