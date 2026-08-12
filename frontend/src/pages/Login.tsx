@@ -31,11 +31,11 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form onSubmit={onSubmit} className="glass w-full max-w-sm rounded-xl p-8">
-        <h1 className="mb-6 font-display text-2xl text-primary">Log in</h1>
-        {error && <p className="mb-4 rounded bg-red-950/50 px-3 py-2 text-sm text-red-300">{error}</p>}
+        <h1 className="mb-6 font-display text-2xl font-semibold text-primary">Log in</h1>
+        {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert">{error}</p>}
         <label className="mb-1 block text-sm text-muted">Email or username</label>
         <input
-          className="mb-4 w-full rounded border border-white/20 bg-black/30 px-3 py-2"
+          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
           value={emailOrUsername}
           onChange={(e) => setEmailOrUsername(e.target.value)}
           required
@@ -43,7 +43,7 @@ export default function Login() {
         <label className="mb-1 block text-sm text-muted">Password</label>
         <input
           type="password"
-          className="mb-6 w-full rounded border border-white/20 bg-black/30 px-3 py-2"
+          className="mb-6 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -51,7 +51,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-primary py-2 font-semibold text-black disabled:opacity-50"
+          className="w-full rounded bg-primary py-2 font-semibold text-bg disabled:opacity-50"
         >
           {submitting ? "Logging in…" : "Log in"}
         </button>

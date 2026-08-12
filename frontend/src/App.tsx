@@ -10,6 +10,7 @@ import Studio from "./pages/Studio";
 import Leaderboard from "./pages/Leaderboard";
 import TrackDetail from "./pages/TrackDetail";
 import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -38,6 +39,7 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

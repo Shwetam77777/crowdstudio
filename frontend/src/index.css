@@ -1,8 +1,7 @@
 /* @import MUST come before any other rule (including @tailwind) per the
-   CSS spec — the old present-mind-sound app had this reversed, which
-   caused browsers to silently drop the font import in production and the
-   Orbitron display font never actually loaded. Fixed here. */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+   CSS spec — placing it after @tailwind (as the old present-mind-sound app
+   did) makes browsers silently drop it in production. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,12 +9,44 @@
 
 @layer base {
   body {
-    @apply bg-bg text-white font-mono antialiased;
+    @apply bg-bg text-paper font-sans antialiased;
+  }
+  ::selection {
+    @apply bg-primary/30 text-paper;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.primary');
+    outline-offset: 2px;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-surface/60 backdrop-blur-md border border-white/10;
+    @apply bg-surface/70 backdrop-blur-md border border-paper/10;
+  }
+  .channel-strip {
+    @apply bg-panel border border-paper/10 rounded-lg;
+  }
+  /* Signature motif: a thin animated signal line, standing in for the
+     literal audio waveform this product is built around. Used as a
+     section divider and an ambient "something is live here" cue. */
+  .signal-line {
+    background: repeating-linear-gradient(
+      90deg,
+      theme('colors.primary') 0px,
+      theme('colors.primary') 2px,
+      transparent 2px,
+      transparent 6px
+    );
+    height: 2px;
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

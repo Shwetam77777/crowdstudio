@@ -39,12 +39,12 @@ export default function Profile() {
   }, [username]);
 
   if (loading) return <div className="p-10 text-center text-muted">Loading…</div>;
-  if (error || !profile) return <div className="p-10 text-center text-red-300">{error ?? "User not found"}</div>;
+  if (error || !profile) return <div className="p-10 text-center text-alert">{error ?? "User not found"}</div>;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
-      <div className="glass mb-6 rounded-xl p-6">
-        <h1 className="font-display text-2xl text-primary">
+      <div className="channel-strip mb-6 rounded-xl p-6">
+        <h1 className="font-display text-2xl font-semibold text-primary">
           {profile.displayName ?? profile.username}
         </h1>
         <p className="text-sm text-muted">@{profile.username} · {profile.trackCount} tracks</p>
@@ -58,7 +58,7 @@ export default function Profile() {
           <Link
             key={t.id}
             to={`/tracks/${t.id}`}
-            className="glass block rounded-lg px-4 py-3 hover:border-primary/50"
+            className="channel-strip block rounded-lg px-4 py-3 hover:border-primary/60"
           >
             <div className="flex items-center justify-between">
               <span>{t.title}</span>

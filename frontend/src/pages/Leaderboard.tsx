@@ -22,23 +22,28 @@ export default function Leaderboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="mb-2 font-display text-3xl text-primary">Leaderboard</h1>
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+      <h1 className="mb-1 font-display text-2xl font-semibold text-primary sm:text-3xl">Leaderboard</h1>
       <p className="mb-6 text-sm text-muted">
         Real, global, database-backed — not per-browser localStorage.
       </p>
-      {error && <p className="text-red-300">{error}</p>}
+      {error && <p className="mb-4 font-mono text-sm text-alert">{error}</p>}
+      {!error && entries.length === 0 && (
+        <div className="channel-strip p-8 text-center text-sm text-muted">
+          No ranked tracks yet — the first saved jam takes the top spot.
+        </div>
+      )}
       <ol className="space-y-2">
         {entries.map((e) => (
-          <li key={e.trackId} className="glass flex items-center justify-between rounded-lg px-4 py-3">
-            <span className="flex items-center gap-3">
-              <span className="w-6 text-muted">#{e.rank}</span>
-              <span>{e.title}</span>
-              <span className="text-sm text-muted">
+          <li key={e.trackId} className="channel-strip flex items-center justify-between px-4 py-3">
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="font-mono text-sm text-muted">#{e.rank}</span>
+              <span className="truncate text-paper">{e.title}</span>
+              <span className="hidden shrink-0 text-sm text-muted sm:inline">
                 by {e.author.displayName ?? e.author.username}
               </span>
             </span>
-            <span className="text-sm text-primary">♥ {e.likeCount}</span>
+            <span className="shrink-0 font-mono text-sm text-primary">♥ {e.likeCount}</span>
           </li>
         ))}
       </ol>

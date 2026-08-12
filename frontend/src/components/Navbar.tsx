@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { usePresence } from "../hooks/usePresence";
+import { VUMeter } from "./VUMeter";
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
@@ -8,38 +9,53 @@ export function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="glass sticky top-0 z-10 flex items-center justify-between px-6 py-3">
-      <Link to="/" className="font-display text-xl tracking-wider text-primary">
-        CROWDJAM
-      </Link>
-      <div className="flex items-center gap-6 text-sm">
-        <span className="flex items-center gap-2 text-muted">
-          <span className={`h-2 w-2 rounded-full ${presence.connected ? "animate-pulse bg-primary" : "bg-red-500"}`} />
-          {presence.connected ? `${presence.totalOnline} online` : "reconnecting…"}
-        </span>
-        <Link to="/leaderboard" className="hover:text-primary">Leaderboard</Link>
-        {user ? (
-          <>
-            <Link to="/studio" className="hover:text-primary">Jam Studio</Link>
-            <Link to={`/profile/${user.username}`} className="hover:text-primary">
-              {user.displayName ?? user.username}
-            </Link>
-            <button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
-              className="rounded border border-white/20 px-3 py-1 hover:border-primary"
-            >
-              Log out
-            </button>
-          </>
-        ) : (
-          <Link to="/login" className="rounded border border-white/20 px-3 py-1 hover:border-primary">
-            Log in
+    <header className="sticky top-0 z-10">
+      <nav className="glass flex items-center justify-between px-4 py-3 sm:px-6">
+        <Link to="/" className="font-display text-lg font-semibold tracking-tight text-primary sm:text-xl">
+          CrowdJam
+        </Link>
+
+        <div className="flex items-center gap-4 text-sm sm:gap-6">
+          <span className="flex items-center gap-2 text-muted" title="Live listeners connected right now">
+            <VUMeter active={presence.connected} bars={3} />
+            <span className="hidden font-mono text-xs sm:inline">
+              {presence.connected ? `${presence.totalOnline} live` : "reconnecting…"}
+            </span>
+          </span>
+
+          <Link to="/leaderboard" className="hidden hover:text-primary sm:inline">
+            Leaderboard
           </Link>
-        )}
-      </div>
-    </nav>
+
+          {user ? (
+            <>
+              <Link to="/studio" className="hover:text-primary">
+                Studio
+              </Link>
+              <Link to={`/profile/${user.username}`} className="hidden hover:text-primary sm:inline">
+                {user.displayName ?? user.username}
+              </Link>
+              <button
+                onClick={() => {
+                  logout();
+                  navigate("/login");
+                }}
+                className="rounded border border-paper/15 px-3 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary sm:text-sm"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded border border-paper/15 px-3 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary sm:text-sm"
+            >
+              Log in
+            </Link>
+          )}
+        </div>
+      </nav>
+      <div className="signal-line" />
+    </header>
   );
 }

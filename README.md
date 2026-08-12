@@ -93,6 +93,25 @@ The request/response shape in `src/routes/aiExport.ts` is written generically
 (`{ audioUrl }` response) — you'll need to adjust the request payload to match
 whichever provider you pick, since each has a different API contract.
 
+## Design
+
+A deliberate visual identity, not a default theme — the product is a live
+audio jamming tool, so the UI borrows from a mixing console rather than
+generic "AI app" neon-cyberpunk:
+
+- **Palette**: warm charcoal console body (`#1C1815`), amber VU-meter
+  accent (`#E8A33D`), teal for "live" states (`#4FB8A6`), rust reserved
+  only for errors (`#C1543A`).
+- **Type**: Space Grotesk for display headings, IBM Plex Sans for body
+  text, IBM Plex Mono for anything numeric — BPM, like counts, ranks — the
+  way a real console readout would render them.
+- **Signature element**: an animated VU-meter (`components/VUMeter.tsx`) —
+  used for online presence in the navbar, jam playback feedback in the
+  Studio, and the 404 page — instead of a generic pulsing dot. Respects
+  `prefers-reduced-motion`.
+- Cards use a "channel strip" treatment (`.channel-strip` utility) to keep
+  the console metaphor consistent across the feed, leaderboard, and profile.
+
 ## Tests
 
 Both apps have real tests — not placeholders.
