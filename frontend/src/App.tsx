@@ -8,6 +8,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Studio from "./pages/Studio";
 import Leaderboard from "./pages/Leaderboard";
+import TrackDetail from "./pages/TrackDetail";
+import Profile from "./pages/Profile";
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/tracks/:id" element={<TrackDetail />} />
+        <Route path="/profile/:username" element={<Profile />} />
         <Route
           path="/studio"
           element={

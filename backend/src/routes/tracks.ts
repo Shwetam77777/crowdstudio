@@ -87,6 +87,37 @@ router.post("/", requireAuth, async (req: AuthedRequest, res) => {
   return res.status(201).json({ track });
 });
 
+// GET /tracks/:id - single track detail
+router.get("/:id", optionalAuth, async (req: AuthedRequest, res) => {
+  const track = await prisma.track.findUnique({
+    where: { id: req.params.id },
+    include: {
+      author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+      _count: { select: { likes: true, comments: true } },
+      likes: req.userId ? { where: { userId: req.userId }, select: { id: true } } : false,
+    },
+  });
+  if (!track) return res.status(404).json({ error: "Track not found" });
+
+  return res.json({
+    track: {
+      id: track.id,
+      title: track.title,
+      description: track.description,
+      jamConfig: track.jamConfig,
+      aiExportUrl: track.aiExportUrl,
+      aiExportStatus: track.aiExportStatus,
+      durationSec: track.durationSec,
+      playCount: track.playCount,
+      createdAt: track.createdAt,
+      author: track.author,
+      likeCount: track._count.likes,
+      commentCount: track._count.comments,
+      likedByMe: req.userId ? (track.likes?.length ?? 0) > 0 : false,
+    },
+  });
+});
+
 router.post("/:id/play", async (req, res) => {
   const track = await prisma.track.update({
     where: { id: req.params.id },

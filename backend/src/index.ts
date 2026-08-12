@@ -9,6 +9,7 @@ import { generalLimiter, authLimiter, writeLimiter } from "./middleware/rateLimi
 import authRoutes from "./routes/auth";
 import trackRoutes from "./routes/tracks";
 import aiExportRoutes from "./routes/aiExport";
+import userRoutes from "./routes/users";
 import { prisma } from "./db";
 
 // Exported (not just run as a side effect) so tests can import the app
@@ -40,6 +41,7 @@ export function buildApp() {
   app.use("/auth", authLimiter, authRoutes);
   app.use("/tracks", writeLimiter, trackRoutes);
   app.use("/tracks", writeLimiter, aiExportRoutes);
+  app.use("/users", writeLimiter, userRoutes);
 
   // 404 for anything unmatched — without this, unknown routes fall through
   // to Express's default HTML error page instead of a clean JSON response.

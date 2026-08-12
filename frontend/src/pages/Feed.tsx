@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 
@@ -51,7 +52,9 @@ export default function Feed() {
         {tracks.map((t) => (
           <div key={t.id} className="glass rounded-xl p-5">
             <div className="mb-1 flex items-center justify-between">
-              <h3 className="font-semibold">{t.title}</h3>
+              <Link to={`/tracks/${t.id}`} className="font-semibold hover:text-primary">
+                {t.title}
+              </Link>
               <button
                 onClick={() => toggleLike(t.id)}
                 disabled={!user}
@@ -61,7 +64,11 @@ export default function Feed() {
               </button>
             </div>
             <p className="text-sm text-muted">
-              by {t.author.displayName ?? t.author.username} · {t.playCount} plays
+              by{" "}
+              <Link to={`/profile/${t.author.username}`} className="hover:text-primary">
+                {t.author.displayName ?? t.author.username}
+              </Link>{" "}
+              · {t.playCount} plays
             </p>
           </div>
         ))}

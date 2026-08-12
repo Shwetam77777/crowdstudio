@@ -9,6 +9,7 @@ export function createMockPrisma() {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
     track: {
       findMany: vi.fn(),

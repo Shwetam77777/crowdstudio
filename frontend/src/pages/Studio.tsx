@@ -10,6 +10,11 @@ export default function Studio() {
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedTrackId, setSavedTrackId] = useState<string | null>(null);
+  const [exportPrompt, setExportPrompt] = useState("");
+  const [exportState, setExportState] = useState<"idle" | "exporting" | "done" | "error">("idle");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportUrl, setExportUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -27,11 +32,28 @@ export default function Studio() {
     setSaveState("saving");
     setSaveError(null);
     try {
-      await api.post("/tracks", { title, jamConfig: params, durationSec: 0 });
+      const { data } = await api.post("/tracks", { title, jamConfig: params, durationSec: 0 });
       setSaveState("saved");
+      setSavedTrackId(data.track.id);
     } catch (err) {
       setSaveState("error");
       setSaveError(apiErrorMessage(err, "Could not save track"));
+    }
+  }
+
+  async function handleExport() {
+    if (!savedTrackId) return;
+    setExportState("exporting");
+    setExportError(null);
+    try {
+      const { data } = await api.post(`/tracks/${savedTrackId}/export`, { prompt: exportPrompt });
+      setExportUrl(data.aiExportUrl);
+      setExportState("done");
+    } catch (err) {
+      setExportState("error");
+      // Correctly surfaces "AI export is not configured on this server"
+      // when no provider key is set, instead of pretending it worked.
+      setExportError(apiErrorMessage(err, "AI export failed"));
     }
   }
 
@@ -106,6 +128,33 @@ export default function Studio() {
           {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Save to feed"}
         </button>
       </div>
+
+      {savedTrackId && (
+        <div className="glass mt-6 rounded-xl p-6">
+          <h2 className="mb-1 font-semibold">AI Export</h2>
+          <p className="mb-3 text-xs text-muted">
+            Renders this jam into a downloadable track via an external AI provider. Only works if
+            the server has a provider configured — otherwise you'll get a clear error, not a fake result.
+          </p>
+          <input
+            className="mb-3 w-full rounded border border-white/20 bg-black/30 px-3 py-2 text-sm"
+            placeholder="Describe the vibe you want, e.g. 'dreamy lo-fi with soft vocals'"
+            value={exportPrompt}
+            onChange={(e) => setExportPrompt(e.target.value)}
+          />
+          {exportError && <p className="mb-3 text-sm text-red-300">{exportError}</p>}
+          {exportState === "done" && exportUrl && (
+            <audio controls src={exportUrl} className="mb-3 w-full" />
+          )}
+          <button
+            onClick={handleExport}
+            disabled={exportState === "exporting" || !exportPrompt.trim()}
+            className="w-full rounded bg-accent py-2 text-sm font-semibold text-black disabled:opacity-50"
+          >
+            {exportState === "exporting" ? "Rendering…" : "Export with AI"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
