@@ -29,29 +29,39 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex flex-1 items-center justify-center px-4 py-10">
       <form onSubmit={onSubmit} className="glass w-full max-w-sm rounded-xl p-8">
         <h1 className="mb-6 font-display text-2xl font-semibold text-primary">Create account</h1>
-        {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert">{error}</p>}
-        <label className="mb-1 block text-sm text-muted">Email</label>
+        {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert" role="alert">{error}</p>}
+        <label htmlFor="reg-email" className="mb-1 block text-sm text-muted">Email</label>
         <input
+          id="reg-email"
+          name="email"
           type="email"
-          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          autoComplete="email"
+          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <label className="mb-1 block text-sm text-muted">Username</label>
+        <label htmlFor="reg-username" className="mb-1 block text-sm text-muted">Username</label>
         <input
-          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          id="reg-username"
+          name="username"
+          autoComplete="username"
+          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
         />
-        <label className="mb-1 block text-sm text-muted">Password (min 8 chars)</label>
+        <label htmlFor="reg-password" className="mb-1 block text-sm text-muted">Password (min 8 chars)</label>
         <input
+          id="reg-password"
+          name="password"
           type="password"
-          className="mb-6 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          autoComplete="new-password"
+          minLength={8}
+          className="mb-6 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

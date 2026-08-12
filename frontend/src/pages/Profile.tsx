@@ -42,12 +42,14 @@ export default function Profile() {
   if (error || !profile) return <div className="p-10 text-center text-alert">{error ?? "User not found"}</div>;
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
-      <div className="channel-strip mb-6 rounded-xl p-6">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="channel-strip mb-6 p-6">
         <h1 className="font-display text-2xl font-semibold text-primary">
           {profile.displayName ?? profile.username}
         </h1>
-        <p className="text-sm text-muted">@{profile.username} · {profile.trackCount} tracks</p>
+        <p className="text-sm text-muted">
+          @{profile.username} · <span className="font-mono">{profile.trackCount} tracks</span>
+        </p>
         {profile.bio && <p className="mt-3 text-sm">{profile.bio}</p>}
       </div>
 
@@ -58,11 +60,11 @@ export default function Profile() {
           <Link
             key={t.id}
             to={`/tracks/${t.id}`}
-            className="channel-strip block rounded-lg px-4 py-3 hover:border-primary/60"
+            className="channel-strip block px-4 py-3 transition-colors hover:border-primary/60"
           >
-            <div className="flex items-center justify-between">
-              <span>{t.title}</span>
-              <span className="text-sm text-muted">
+            <div className="flex items-center justify-between gap-3">
+              <span className="truncate text-paper">{t.title}</span>
+              <span className="shrink-0 font-mono text-sm text-muted">
                 ♥ {t.likeCount} · {t.playCount} plays
               </span>
             </div>

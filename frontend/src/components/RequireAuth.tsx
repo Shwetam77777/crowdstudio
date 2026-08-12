@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import { VUMeter } from "./VUMeter";
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuthStore();
@@ -11,7 +12,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   // fired on the very first render, before AuthProvider had a chance to
   // restore the session.
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center text-muted">Loading…</div>;
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted">
+        <VUMeter active bars={4} />
+        <span className="font-mono text-xs">Loading…</span>
+      </div>
+    );
   }
   if (!user) {
     return <Navigate to="/login" replace />;

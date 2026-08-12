@@ -10,6 +10,10 @@
 @layer base {
   body {
     @apply bg-bg text-paper font-sans antialiased;
+    /* Makes native controls (select, range, audio, date pickers) render in
+       their dark variant instead of the browser's default light chrome,
+       which otherwise looks jarringly out of place against this palette. */
+    color-scheme: dark;
   }
   ::selection {
     @apply bg-primary/30 text-paper;

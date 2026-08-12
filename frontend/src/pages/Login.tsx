@@ -29,21 +29,27 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex flex-1 items-center justify-center px-4 py-10">
       <form onSubmit={onSubmit} className="glass w-full max-w-sm rounded-xl p-8">
         <h1 className="mb-6 font-display text-2xl font-semibold text-primary">Log in</h1>
-        {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert">{error}</p>}
-        <label className="mb-1 block text-sm text-muted">Email or username</label>
+        {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert" role="alert">{error}</p>}
+        <label htmlFor="login-id" className="mb-1 block text-sm text-muted">Email or username</label>
         <input
-          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          id="login-id"
+          name="identifier"
+          autoComplete="username"
+          className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={emailOrUsername}
           onChange={(e) => setEmailOrUsername(e.target.value)}
           required
         />
-        <label className="mb-1 block text-sm text-muted">Password</label>
+        <label htmlFor="login-password" className="mb-1 block text-sm text-muted">Password</label>
         <input
+          id="login-password"
+          name="password"
           type="password"
-          className="mb-6 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          autoComplete="current-password"
+          className="mb-6 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

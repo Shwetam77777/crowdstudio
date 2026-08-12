@@ -23,24 +23,32 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Feed />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/tracks/:id" element={<TrackDetail />} />
-        <Route path="/profile/:username" element={<Profile />} />
-        <Route
-          path="/studio"
-          element={
-            <RequireAuth>
-              <Studio />
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        {/* flex-1 so pages that center content (Login/Register) fill exactly
+            the remaining viewport height instead of adding their own
+            min-h-screen on top of the navbar's height, which pushed
+            content below the fold on short viewports. */}
+        <main className="flex flex-1 flex-col">
+          <Routes>
+            <Route path="/" element={<Feed />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/tracks/:id" element={<TrackDetail />} />
+            <Route path="/profile/:username" element={<Profile />} />
+            <Route
+              path="/studio"
+              element={
+                <RequireAuth>
+                  <Studio />
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }

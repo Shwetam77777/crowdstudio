@@ -74,25 +74,26 @@ export default function TrackDetail() {
   if (error || !track) return <div className="p-10 text-center text-alert">{error ?? "Track not found"}</div>;
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
       <Link to="/" className="mb-4 inline-block text-sm text-muted hover:text-primary">
         ← Back to feed
       </Link>
-      <div className="channel-strip mb-6 rounded-xl p-6">
+      <div className="channel-strip mb-6 p-6">
         <h1 className="mb-1 font-display text-2xl font-semibold text-primary">{track.title}</h1>
         <p className="mb-4 text-sm text-muted">
-          by {track.author.displayName ?? track.author.username} · {track.playCount} plays
+          by {track.author.displayName ?? track.author.username} ·{" "}
+          <span className="font-mono">{track.playCount} plays</span>
         </p>
         {track.description && <p className="mb-4 text-sm">{track.description}</p>}
 
         <button
           onClick={toggleLike}
           disabled={!user}
-          className={`rounded border px-4 py-2 text-sm disabled:opacity-40 ${
+          className={`rounded border px-4 py-2 text-sm transition-colors disabled:opacity-40 ${
             track.likedByMe ? "border-primary text-primary" : "border-paper/15 text-muted"
           }`}
         >
-          ♥ {track.likeCount} {track.likedByMe ? "Liked" : "Like"}
+          <span className="font-mono">♥ {track.likeCount}</span> {track.likedByMe ? "Liked" : "Like"}
         </button>
 
         {track.aiExportStatus === "ready" && track.aiExportUrl && (
@@ -106,7 +107,7 @@ export default function TrackDetail() {
         )}
       </div>
 
-      <div className="channel-strip rounded-xl p-6">
+      <div className="channel-strip p-6">
         <h2 className="mb-4 font-semibold">Comments ({comments.length})</h2>
         <div className="mb-4 space-y-3">
           {comments.length === 0 && <p className="text-sm text-muted">No comments yet.</p>}
@@ -121,9 +122,12 @@ export default function TrackDetail() {
 
         {user ? (
           <div>
-            {commentError && <p className="mb-2 text-sm text-alert">{commentError}</p>}
+            {commentError && <p className="mb-2 text-sm text-alert" role="alert">{commentError}</p>}
+            <label htmlFor="new-comment" className="sr-only">Add a comment</label>
             <textarea
-              className="mb-2 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm"
+              id="new-comment"
+              name="comment"
+              className="mb-2 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm transition-colors focus:border-primary"
               rows={2}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}

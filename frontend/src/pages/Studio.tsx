@@ -103,9 +103,11 @@ export default function Studio() {
         />
 
         <div className="mt-4">
-          <label className="mb-1 block text-sm text-muted">Scale</label>
+          <label htmlFor="jam-scale" className="mb-1 block text-sm text-muted">Scale</label>
           <select
-            className="w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+            id="jam-scale"
+            name="scale"
+            className="w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
             value={params.scale}
             onChange={(e) => setParams({ scale: e.target.value as typeof params.scale })}
           >
@@ -117,14 +119,16 @@ export default function Studio() {
       </div>
 
       <div className="channel-strip p-6">
-        <label className="mb-1 block text-sm text-muted">Track title</label>
+        <label htmlFor="track-title" className="mb-1 block text-sm text-muted">Track title</label>
         <input
-          className="mb-3 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2"
+          id="track-title"
+          name="title"
+          className="mb-3 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="My late-night jam"
         />
-        {saveError && <p className="mb-3 text-sm text-alert">{saveError}</p>}
+        {saveError && <p className="mb-3 text-sm text-alert" role="alert">{saveError}</p>}
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
@@ -141,13 +145,16 @@ export default function Studio() {
             Renders this jam into a downloadable track via an external AI provider. Only works if
             the server has a provider configured — otherwise you'll get a clear error, not a fake result.
           </p>
+          <label htmlFor="export-prompt" className="sr-only">Describe the vibe for AI export</label>
           <input
-            className="mb-3 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm"
+            id="export-prompt"
+            name="exportPrompt"
+            className="mb-3 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm transition-colors focus:border-primary"
             placeholder="Describe the vibe you want, e.g. 'dreamy lo-fi with soft vocals'"
             value={exportPrompt}
             onChange={(e) => setExportPrompt(e.target.value)}
           />
-          {exportError && <p className="mb-3 text-sm text-alert">{exportError}</p>}
+          {exportError && <p className="mb-3 text-sm text-alert" role="alert">{exportError}</p>}
           {exportState === "done" && exportUrl && (
             <audio controls src={exportUrl} className="mb-3 w-full" />
           )}
