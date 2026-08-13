@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Heart, PlayCircle, Sparkles } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 import { usePresence } from "../hooks/usePresence";
@@ -67,6 +68,7 @@ export default function Feed() {
 
       {!loading && !error && tracks.length === 0 && (
         <div className="channel-strip flex flex-col items-center gap-3 p-10 text-center">
+          <Sparkles className="text-primary" size={28} />
           <p className="text-paper">No jams saved yet.</p>
           <p className="text-sm text-muted">Open the Studio, hit start, and be the first on the board.</p>
           <Link
@@ -91,21 +93,24 @@ export default function Feed() {
                     onClick={() => toggleLike(t.id)}
                     disabled={!user}
                     title={user ? "Like this track" : "Log in to like tracks"}
-                    className={`shrink-0 font-mono text-sm ${
+                    className={`flex shrink-0 items-center gap-1 font-mono text-sm transition-colors ${
                       t.likedByMe ? "text-primary" : "text-muted"
                     } disabled:opacity-40`}
                   >
-                    ♥ {t.likeCount}
+                    <Heart size={14} fill={t.likedByMe ? "currentColor" : "none"} />
+                    {t.likeCount}
                   </button>
                 </div>
                 {t.description && <p className="mb-2 text-sm text-muted">{t.description}</p>}
               </div>
-              <p className="mt-3 font-mono text-xs text-muted">
+              <p className="mt-3 flex items-center gap-1.5 font-mono text-xs text-muted">
                 by{" "}
                 <Link to={`/profile/${t.author.username}`} className="text-accent hover:underline">
                   {t.author.displayName ?? t.author.username}
-                </Link>{" "}
-                · {t.playCount} plays
+                </Link>
+                <span className="flex items-center gap-1">
+                  <PlayCircle size={12} /> {t.playCount}
+                </span>
               </p>
             </div>
           ))}

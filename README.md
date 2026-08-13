@@ -99,18 +99,45 @@ A deliberate visual identity, not a default theme — the product is a live
 audio jamming tool, so the UI borrows from a mixing console rather than
 generic "AI app" neon-cyberpunk:
 
+- **App shell**: sidebar navigation (`components/AppShell.tsx`) — the
+  pattern real platforms use (Spotify, Linear, most DAWs) — instead of a
+  single thin top navbar, with a condensed header on mobile.
 - **Palette**: warm charcoal console body (`#1C1815`), amber VU-meter
   accent (`#E8A33D`), teal for "live" states (`#4FB8A6`), rust reserved
   only for errors (`#C1543A`).
 - **Type**: Space Grotesk for display headings, IBM Plex Sans for body
   text, IBM Plex Mono for anything numeric — BPM, like counts, ranks — the
   way a real console readout would render them.
+- **Icons**: lucide-react throughout (Jam Studio channel meters, feed
+  actions, leaderboard, nav) instead of raw emoji/characters.
 - **Signature element**: an animated VU-meter (`components/VUMeter.tsx`) —
-  used for online presence in the navbar, jam playback feedback in the
-  Studio, and the 404 page — instead of a generic pulsing dot. Respects
+  online presence, per-channel Jam Studio feedback (drums/bass/pads/lead),
+  the 404 page — instead of a generic pulsing dot. Respects
   `prefers-reduced-motion`.
 - Cards use a "channel strip" treatment (`.channel-strip` utility) to keep
   the console metaphor consistent across the feed, leaderboard, and profile.
+
+## The jam engine — what "generative music" actually means here
+
+Being upfront about what this is and isn't:
+
+- **What it is**: a real, free, instant, browser-based generative
+  arrangement — four layered parts (drums, bass, sustained pad chords, a
+  sparse arpeggiated lead) driven by an actual diatonic chord progression
+  (`hooks/useJamEngine.ts`), not a single note wandering a scale. Tempo,
+  filter, reverb, scale, and an "Energy" fader (drum density + lead note
+  frequency) are all live-adjustable while playing, and synced in real time
+  to other users in the jam room over WebSocket.
+- **What it isn't**: a Suno/Udio-style tool that produces a finished song
+  with vocals, lyrics, and studio-quality mastering. That class of model is
+  enormous, runs in the cloud, and cannot be replicated for free in a
+  browser — which is exactly why "AI Export" is a separate, clearly-gated
+  feature that calls a real external provider (and tells you plainly if
+  none is configured) rather than pretending client-side synthesis can
+  produce that.
+- Chord-building logic is unit tested (`__tests__/jamEngine.test.ts`) since
+  it's pure music theory and easy to silently get wrong — worth checking if
+  you extend the progressions or add new scales.
 
 ## Tests
 

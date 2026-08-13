@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Heart, PlayCircle } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 
 interface ProfileData {
@@ -64,8 +65,9 @@ export default function Profile() {
           >
             <div className="flex items-center justify-between gap-3">
               <span className="truncate text-paper">{t.title}</span>
-              <span className="shrink-0 font-mono text-sm text-muted">
-                ♥ {t.likeCount} · {t.playCount} plays
+              <span className="flex shrink-0 items-center gap-3 font-mono text-sm text-muted">
+                <span className="flex items-center gap-1"><Heart size={13} /> {t.likeCount}</span>
+                <span className="flex items-center gap-1"><PlayCircle size={13} /> {t.playCount}</span>
               </span>
             </div>
           </Link>

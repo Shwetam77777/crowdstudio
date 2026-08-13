@@ -7,12 +7,24 @@ export interface JamParams {
   tempo: number; // BPM
   filterCutoff: number; // Hz
   reverbWet: number; // 0-1
+  energy: number; // 0-1 — drum density, lead note frequency, brightness
 }
 
-const SCALES: Record<JamParams["scale"], number[]> = {
+export const SCALES: Record<JamParams["scale"], number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
   minor: [0, 2, 3, 5, 7, 8, 10],
   pentatonic: [0, 2, 4, 7, 9],
+};
+
+// Diatonic chord progressions expressed as scale-degree indices (0-based),
+// chosen to sound like a real, recognizable progression rather than random
+// notes: major = I-V-vi-IV (the most common pop progression), minor =
+// i-VI-III-VII, pentatonic has no thirds/sevenths in the usual sense so we
+// just cycle root movements that stay consonant against every other degree.
+const PROGRESSIONS: Record<JamParams["scale"], number[]> = {
+  major: [0, 4, 5, 3],
+  minor: [0, 5, 2, 6],
+  pentatonic: [0, 3, 4, 2],
 };
 
 export const DEFAULT_JAM_PARAMS: JamParams = {
@@ -21,74 +33,194 @@ export const DEFAULT_JAM_PARAMS: JamParams = {
   tempo: 90,
   filterCutoff: 2000,
   reverbWet: 0.35,
+  energy: 0.6,
 };
 
+/** Resolves a scale-degree index (can exceed the scale length, wrapping up
+ * an octave) to an absolute note, staying diatonic instead of using fixed
+ * semitone intervals — this is what keeps chords in key. */
+export function degreeToNote(scaleIntervals: number[], root: string, degree: number): string {
+  const len = scaleIntervals.length;
+  const octave = Math.floor(degree / len);
+  const idx = ((degree % len) + len) % len;
+  return Tone.Frequency(root).transpose(scaleIntervals[idx] + octave * 12).toNote();
+}
+
+export function buildTriad(scaleIntervals: number[], root: string, degree: number): string[] {
+  return [
+    degreeToNote(scaleIntervals, root, degree),
+    degreeToNote(scaleIntervals, root, degree + 2),
+    degreeToNote(scaleIntervals, root, degree + 4),
+  ];
+}
+
+interface EngineNodes {
+  drumBus: Tone.Filter;
+  kick: Tone.MembraneSynth;
+  hat: Tone.NoiseSynth;
+  bass: Tone.MonoSynth;
+  pad: Tone.PolySynth;
+  lead: Tone.PolySynth;
+  masterFilter: Tone.Filter;
+  reverb: Tone.Reverb;
+  delay: Tone.FeedbackDelay;
+  compressor: Tone.Compressor;
+  drumSeq: Tone.Sequence;
+  chordLoop: Tone.Loop;
+  leadSeq: Tone.Sequence;
+}
+
 /**
- * Real-time generative synth engine. Audio only starts after an explicit
- * user gesture (start()) — browsers block autoplay, and Tone.start()
- * requires a user interaction, so we never try to play on mount.
+ * Real-time generative arrangement engine — not a single lonely melody
+ * loop. Layers four parts through a shared filter/reverb/compressor bus:
+ *  - drums: kick on the downbeats, hi-hats whose density scales with `energy`
+ *  - bass: root note of the current chord, one hit per bar
+ *  - pads: full sustained diatonic triad per bar (this is what makes it
+ *    sound harmonically "real" instead of a single note wandering a scale)
+ *  - lead: sparse arpeggiated notes drawn from the current chord tones,
+ *    with a feedback delay so it doesn't sound dry/robotic
+ * The four-chord progression repeats every 4 bars and is chosen per scale
+ * to be a recognizable, resolved progression (see PROGRESSIONS above).
  */
 export function useJamEngine() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [params, setParamsState] = useState<JamParams>(DEFAULT_JAM_PARAMS);
-
-  const synthRef = useRef<Tone.PolySynth | null>(null);
-  const filterRef = useRef<Tone.Filter | null>(null);
-  const reverbRef = useRef<Tone.Reverb | null>(null);
-  const loopRef = useRef<Tone.Loop | null>(null);
+  const nodesRef = useRef<EngineNodes | null>(null);
+  const barIndexRef = useRef(0);
+  const currentChordRef = useRef<string[]>([]);
+  // Running Tone.Sequence/Loop callbacks close over whatever this ref
+  // points to *at call time* (not at creation time), so live slider changes
+  // to scale/rootNote/energy actually affect the next bar/step instead of
+  // being silently ignored until the jam is stopped and restarted.
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
 
   const start = useCallback(async () => {
     if (isPlaying) return;
-    await Tone.start(); // requires user gesture — call this from a click handler
+    await Tone.start(); // requires a user gesture — call this from a click handler
 
-    const filter = new Tone.Filter(params.filterCutoff, "lowpass").toDestination();
-    const reverb = new Tone.Reverb({ decay: 3, wet: params.reverbWet }).connect(filter);
-    const synth = new Tone.PolySynth(Tone.Synth).connect(reverb);
+    const compressor = new Tone.Compressor(-18, 3).toDestination();
+    const masterFilter = new Tone.Filter(params.filterCutoff, "lowpass").connect(compressor);
+    const reverb = new Tone.Reverb({ decay: 3.2, wet: params.reverbWet }).connect(masterFilter);
+    const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.18 }).connect(reverb);
 
-    filterRef.current = filter;
-    reverbRef.current = reverb;
-    synthRef.current = synth;
+    const drumBus = new Tone.Filter(8000, "lowpass").connect(compressor);
+    const kick = new Tone.MembraneSynth({ octaves: 4, pitchDecay: 0.05 }).connect(drumBus);
+    const hat = new Tone.NoiseSynth({
+      noise: { type: "white" },
+      envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
+    }).connect(drumBus);
+    hat.volume.value = -18;
+
+    const bass = new Tone.MonoSynth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.4 },
+    }).connect(reverb);
+    bass.volume.value = -6;
+
+    const pad = new Tone.PolySynth(Tone.FMSynth, {
+      envelope: { attack: 0.6, decay: 0.3, sustain: 0.6, release: 1.5 },
+    }).connect(reverb);
+    pad.volume.value = -14;
+
+    const lead = new Tone.PolySynth(Tone.Synth, {
+      envelope: { attack: 0.01, decay: 0.2, sustain: 0.15, release: 0.4 },
+    }).connect(delay);
+    lead.volume.value = -8;
 
     Tone.Transport.bpm.value = params.tempo;
+    barIndexRef.current = 0;
 
-    const loop = new Tone.Loop((time) => {
-      const scaleIntervals = SCALES[params.scale];
-      const degree = scaleIntervals[Math.floor(Math.random() * scaleIntervals.length)];
-      const note = Tone.Frequency(params.rootNote).transpose(degree).toNote();
-      synth.triggerAttackRelease(note, "8n", time);
-    }, "4n");
+    // One chord change per bar, cycling through the 4-chord progression for
+    // whichever scale is currently selected — reads paramsRef live so
+    // switching scale mid-jam changes the progression on the next bar.
+    const chordLoop = new Tone.Loop((time) => {
+      const p = paramsRef.current;
+      const progression = PROGRESSIONS[p.scale];
+      const scaleIntervals = SCALES[p.scale];
+      const degree = progression[barIndexRef.current % progression.length];
+      const chord = buildTriad(scaleIntervals, p.rootNote, degree);
+      currentChordRef.current = chord;
+      pad.triggerAttackRelease(chord, "1m", time);
+      bass.triggerAttackRelease(chord[0], "2n", time);
+      barIndexRef.current += 1;
+    }, "1m").start(0);
 
-    loopRef.current = loop;
-    loop.start(0);
+    // 16-step drum pattern per bar: kick on 1 and 3, hats fill in based on
+    // `energy` (higher energy = denser hat pattern instead of a fixed grid).
+    const drumSeq = new Tone.Sequence(
+      (time, step: number) => {
+        if (step === 0 || step === 8) kick.triggerAttackRelease("C1", "8n", time);
+        const hatProbability = 0.25 + paramsRef.current.energy * 0.5;
+        if (Math.random() < hatProbability) hat.triggerAttackRelease("16n", time);
+      },
+      Array.from({ length: 16 }, (_, i) => i),
+      "16n"
+    ).start(0);
+
+    // Sparse arpeggiated lead drawn from the current chord — probability of
+    // playing a note each 8th-note step scales with `energy`, so low energy
+    // gives a lot of open space and high energy feels busier/more excited.
+    const leadSeq = new Tone.Sequence(
+      (time) => {
+        if (Math.random() > 0.35 + paramsRef.current.energy * 0.35) return;
+        const chord = currentChordRef.current;
+        if (chord.length === 0) return;
+        const note = chord[Math.floor(Math.random() * chord.length)];
+        const octaveUp = Tone.Frequency(note).transpose(12).toNote();
+        lead.triggerAttackRelease(Math.random() < 0.5 ? note : octaveUp, "8n", time);
+      },
+      ["8n"],
+      "8n"
+    ).start(0);
+
+    nodesRef.current = {
+      drumBus,
+      kick,
+      hat,
+      bass,
+      pad,
+      lead,
+      masterFilter,
+      reverb,
+      delay,
+      compressor,
+      drumSeq,
+      chordLoop,
+      leadSeq,
+    };
+
     Tone.Transport.start();
     setIsPlaying(true);
   }, [isPlaying, params]);
 
   const stop = useCallback(() => {
     Tone.Transport.stop();
-    loopRef.current?.dispose();
-    synthRef.current?.dispose();
-    filterRef.current?.dispose();
-    reverbRef.current?.dispose();
-    loopRef.current = null;
-    synthRef.current = null;
-    filterRef.current = null;
-    reverbRef.current = null;
+    Tone.Transport.cancel();
+    const n = nodesRef.current;
+    if (n) {
+      [n.drumSeq, n.chordLoop, n.leadSeq, n.kick, n.hat, n.bass, n.pad, n.lead, n.delay, n.reverb, n.masterFilter, n.drumBus, n.compressor].forEach(
+        (node) => node.dispose()
+      );
+    }
+    nodesRef.current = null;
+    barIndexRef.current = 0;
     setIsPlaying(false);
   }, []);
 
   const setParams = useCallback((next: Partial<JamParams>) => {
     setParamsState((prev) => {
       const merged = { ...prev, ...next };
-      if (filterRef.current && next.filterCutoff !== undefined) {
-        filterRef.current.frequency.rampTo(next.filterCutoff, 0.1);
+      const n = nodesRef.current;
+      if (n) {
+        if (next.filterCutoff !== undefined) n.masterFilter.frequency.rampTo(next.filterCutoff, 0.15);
+        if (next.reverbWet !== undefined) n.reverb.wet.rampTo(next.reverbWet, 0.15);
+        if (next.tempo !== undefined) Tone.Transport.bpm.rampTo(next.tempo, 0.3);
       }
-      if (reverbRef.current && next.reverbWet !== undefined) {
-        reverbRef.current.wet.rampTo(next.reverbWet, 0.1);
-      }
-      if (next.tempo !== undefined) {
-        Tone.Transport.bpm.rampTo(next.tempo, 0.2);
-      }
+      // scale/rootNote/energy changes are picked up by the running
+      // sequences via paramsRef (synced above on every render) on their
+      // next tick — no node rebuild needed, so parameter changes are
+      // glitch-free instead of requiring a stop/restart.
       return merged;
     });
   }, []);

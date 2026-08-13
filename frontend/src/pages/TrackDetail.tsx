@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Heart, PlayCircle, Send } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 
@@ -75,25 +76,26 @@ export default function TrackDetail() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link to="/" className="mb-4 inline-block text-sm text-muted hover:text-primary">
-        ← Back to feed
+      <Link to="/" className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-primary">
+        <ArrowLeft size={14} /> Back to feed
       </Link>
       <div className="channel-strip mb-6 p-6">
         <h1 className="mb-1 font-display text-2xl font-semibold text-primary">{track.title}</h1>
-        <p className="mb-4 text-sm text-muted">
+        <p className="mb-4 flex items-center gap-1.5 text-sm text-muted">
           by {track.author.displayName ?? track.author.username} ·{" "}
-          <span className="font-mono">{track.playCount} plays</span>
+          <span className="flex items-center gap-1 font-mono"><PlayCircle size={13} /> {track.playCount}</span>
         </p>
         {track.description && <p className="mb-4 text-sm">{track.description}</p>}
 
         <button
           onClick={toggleLike}
           disabled={!user}
-          className={`rounded border px-4 py-2 text-sm transition-colors disabled:opacity-40 ${
+          className={`flex items-center gap-1.5 rounded border px-4 py-2 text-sm transition-colors disabled:opacity-40 ${
             track.likedByMe ? "border-primary text-primary" : "border-paper/15 text-muted"
           }`}
         >
-          <span className="font-mono">♥ {track.likeCount}</span> {track.likedByMe ? "Liked" : "Like"}
+          <Heart size={15} fill={track.likedByMe ? "currentColor" : "none"} />
+          <span className="font-mono">{track.likeCount}</span> {track.likedByMe ? "Liked" : "Like"}
         </button>
 
         {track.aiExportStatus === "ready" && track.aiExportUrl && (
@@ -136,8 +138,9 @@ export default function TrackDetail() {
             <button
               onClick={postComment}
               disabled={posting || !newComment.trim()}
-              className="rounded bg-primary px-4 py-1.5 text-sm font-semibold text-bg disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded bg-primary px-4 py-1.5 text-sm font-semibold text-bg disabled:opacity-50"
             >
+              <Send size={13} />
               {posting ? "Posting…" : "Post"}
             </button>
           </div>

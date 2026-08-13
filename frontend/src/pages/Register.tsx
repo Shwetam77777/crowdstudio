@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Radio } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 
@@ -31,7 +32,9 @@ export default function Register() {
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-10">
       <form onSubmit={onSubmit} className="glass w-full max-w-sm rounded-xl p-8">
-        <h1 className="mb-6 font-display text-2xl font-semibold text-primary">Create account</h1>
+        <h1 className="mb-6 flex items-center gap-2 font-display text-2xl font-semibold text-primary">
+          <Radio size={22} /> Create account
+        </h1>
         {error && <p className="mb-4 rounded bg-alert/15 px-3 py-2 text-sm text-alert" role="alert">{error}</p>}
         <label htmlFor="reg-email" className="mb-1 block text-sm text-muted">Email</label>
         <input

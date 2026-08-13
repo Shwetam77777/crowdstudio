@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Play, Square, Save, Sparkles, Music2, Drum, Waves } from "lucide-react";
 import { useJamEngine } from "../hooks/useJamEngine";
 import { usePresence } from "../hooks/usePresence";
 import { getSocket } from "../lib/socket";
@@ -59,62 +60,90 @@ export default function Studio() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="mb-1 font-display text-2xl font-semibold text-primary sm:text-3xl">Jam Studio</h1>
-      <p className="mb-6 flex items-center gap-2 font-mono text-xs text-muted">
-        <VUMeter active={presence.inJamRoom > 0} bars={3} />
-        {presence.inJamRoom} jamming right now — live, over WebSocket
-      </p>
-
-      <div className="channel-strip mb-6 p-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-primary sm:text-3xl">Jam Studio</h1>
+          <p className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
+            <VUMeter active={presence.inJamRoom > 0} bars={3} />
+            {presence.inJamRoom} jamming right now — live, over WebSocket
+          </p>
+        </div>
         <button
           onClick={() => (isPlaying ? stop() : start())}
-          className={`mb-6 flex w-full items-center justify-center gap-3 rounded-lg py-3 font-display text-lg font-semibold transition-colors ${
+          className={`flex items-center gap-2 rounded-lg px-6 py-3 font-display text-base font-semibold transition-colors ${
             isPlaying ? "bg-accent text-bg" : "bg-primary text-bg"
           }`}
         >
-          <VUMeter active={isPlaying} bars={4} />
-          {isPlaying ? "STOP" : "START JAM"}
+          {isPlaying ? <Square size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+          {isPlaying ? "Stop" : "Start Jam"}
         </button>
+      </div>
 
-        <Slider
-          label="Tempo"
-          value={params.tempo}
-          min={60}
-          max={160}
-          onChange={(v) => setParams({ tempo: v })}
-          suffix="bpm"
-        />
-        <Slider
-          label="Filter cutoff"
-          value={params.filterCutoff}
-          min={200}
-          max={8000}
-          onChange={(v) => setParams({ filterCutoff: v })}
-          suffix="Hz"
-        />
-        <Slider
-          label="Reverb"
-          value={Math.round(params.reverbWet * 100)}
-          min={0}
-          max={100}
-          onChange={(v) => setParams({ reverbWet: v / 100 })}
-          suffix="%"
-        />
+      {/* Live arrangement meters — a real (if simplified) reflection of the
+          four parts actually playing: drums, bass, pads, lead. Gives
+          feedback that this is a full arrangement, not one lonely loop. */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <ChannelMeter icon={<Drum size={16} />} label="Drums" active={isPlaying} />
+        <ChannelMeter icon={<Waves size={16} />} label="Bass" active={isPlaying} />
+        <ChannelMeter icon={<Music2 size={16} />} label="Pads" active={isPlaying} />
+        <ChannelMeter icon={<Sparkles size={16} />} label="Lead" active={isPlaying} />
+      </div>
 
-        <div className="mt-4">
-          <label htmlFor="jam-scale" className="mb-1 block text-sm text-muted">Scale</label>
-          <select
-            id="jam-scale"
-            name="scale"
-            className="w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
-            value={params.scale}
-            onChange={(e) => setParams({ scale: e.target.value as typeof params.scale })}
-          >
-            <option value="pentatonic">Pentatonic</option>
-            <option value="major">Major</option>
-            <option value="minor">Minor</option>
-          </select>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        <div className="channel-strip p-6">
+          <h2 className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">Groove</h2>
+          <Slider
+            label="Tempo"
+            value={params.tempo}
+            min={60}
+            max={160}
+            onChange={(v) => setParams({ tempo: v })}
+            suffix=" bpm"
+          />
+          <Slider
+            label="Energy"
+            value={Math.round(params.energy * 100)}
+            min={0}
+            max={100}
+            onChange={(v) => setParams({ energy: v / 100 })}
+            suffix="%"
+            hint="Drum density and lead note frequency"
+          />
+          <div className="mt-4">
+            <label htmlFor="jam-scale" className="mb-1 block text-sm text-muted">Scale</label>
+            <select
+              id="jam-scale"
+              name="scale"
+              className="w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
+              value={params.scale}
+              onChange={(e) => setParams({ scale: e.target.value as typeof params.scale })}
+            >
+              <option value="pentatonic">Pentatonic</option>
+              <option value="major">Major</option>
+              <option value="minor">Minor</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="channel-strip p-6">
+          <h2 className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">Tone</h2>
+          <Slider
+            label="Filter cutoff"
+            value={params.filterCutoff}
+            min={200}
+            max={8000}
+            onChange={(v) => setParams({ filterCutoff: v })}
+            suffix=" Hz"
+          />
+          <Slider
+            label="Reverb"
+            value={Math.round(params.reverbWet * 100)}
+            min={0}
+            max={100}
+            onChange={(v) => setParams({ reverbWet: v / 100 })}
+            suffix="%"
+          />
         </div>
       </div>
 
@@ -132,15 +161,18 @@ export default function Studio() {
         <button
           onClick={handleSave}
           disabled={saveState === "saving"}
-          className="w-full rounded border border-primary py-2 text-primary disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded border border-primary py-2 text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
         >
+          <Save size={16} />
           {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Save to feed"}
         </button>
       </div>
 
       {savedTrackId && (
         <div className="channel-strip mt-6 p-6">
-          <h2 className="mb-1 font-semibold">AI Export</h2>
+          <h2 className="mb-1 flex items-center gap-2 font-semibold">
+            <Sparkles size={16} className="text-accent" /> AI Export
+          </h2>
           <p className="mb-3 text-xs text-muted">
             Renders this jam into a downloadable track via an external AI provider. Only works if
             the server has a provider configured — otherwise you'll get a clear error, not a fake result.
@@ -171,6 +203,16 @@ export default function Studio() {
   );
 }
 
+function ChannelMeter({ icon, label, active }: { icon: ReactNode; label: string; active: boolean }) {
+  return (
+    <div className="channel-strip flex flex-col items-center gap-2 py-4">
+      <span className={active ? "text-primary" : "text-muted"}>{icon}</span>
+      <VUMeter active={active} bars={5} />
+      <span className="font-mono text-xs text-muted">{label}</span>
+    </div>
+  );
+}
+
 function Slider({
   label,
   value,
@@ -178,6 +220,7 @@ function Slider({
   max,
   onChange,
   suffix,
+  hint,
 }: {
   label: string;
   value: number;
@@ -185,6 +228,7 @@ function Slider({
   max: number;
   onChange: (v: number) => void;
   suffix: string;
+  hint?: string;
 }) {
   return (
     <div className="mb-4">
@@ -207,6 +251,7 @@ function Slider({
         }}
         className="w-full accent-primary"
       />
+      {hint && <p className="mt-0.5 text-xs text-muted/70">{hint}</p>}
     </div>
   );
 }
