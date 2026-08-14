@@ -138,6 +138,10 @@ Being upfront about what this is and isn't:
 - Chord-building logic is unit tested (`__tests__/jamEngine.test.ts`) since
   it's pure music theory and easy to silently get wrong — worth checking if
   you extend the progressions or add new scales.
+- The Studio waveform (`components/AudioVisualizer.tsx`) reads a live
+  `Tone.Analyser` tapped off the actual mixed output — it's drawing the
+  real signal, not a decorative animation, so if you don't hear anything
+  the line will be flat too (useful for debugging audio issues).
 
 ## Tests
 

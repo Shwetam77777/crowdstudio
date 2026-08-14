@@ -5,9 +5,10 @@ import { usePresence } from "../hooks/usePresence";
 import { getSocket } from "../lib/socket";
 import { api, apiErrorMessage } from "../lib/api";
 import { VUMeter } from "../components/VUMeter";
+import { AudioVisualizer } from "../components/AudioVisualizer";
 
 export default function Studio() {
-  const { isPlaying, params, start, stop, setParams } = useJamEngine();
+  const { isPlaying, params, start, stop, setParams, getAnalyser } = useJamEngine();
   const presence = usePresence();
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -78,6 +79,10 @@ export default function Studio() {
           {isPlaying ? <Square size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
           {isPlaying ? "Stop" : "Start Jam"}
         </button>
+      </div>
+
+      <div className="channel-strip mb-6 p-3">
+        <AudioVisualizer getAnalyser={getAnalyser} active={isPlaying} />
       </div>
 
       {/* Live arrangement meters — a real (if simplified) reflection of the

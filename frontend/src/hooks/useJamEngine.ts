@@ -65,6 +65,7 @@ interface EngineNodes {
   reverb: Tone.Reverb;
   delay: Tone.FeedbackDelay;
   compressor: Tone.Compressor;
+  analyser: Tone.Analyser;
   drumSeq: Tone.Sequence;
   chordLoop: Tone.Loop;
   leadSeq: Tone.Sequence;
@@ -100,6 +101,11 @@ export function useJamEngine() {
     await Tone.start(); // requires a user gesture — call this from a click handler
 
     const compressor = new Tone.Compressor(-18, 3).toDestination();
+    // Real-time waveform tap on the actual mixed output — this is what
+    // powers the Studio visualizer, so what's drawn on screen is the
+    // genuine audio signal, not a decorative animation.
+    const analyser = new Tone.Analyser("waveform", 256);
+    compressor.connect(analyser);
     const masterFilter = new Tone.Filter(params.filterCutoff, "lowpass").connect(compressor);
     const reverb = new Tone.Reverb({ decay: 3.2, wet: params.reverbWet }).connect(masterFilter);
     const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.18 }).connect(reverb);
@@ -185,6 +191,7 @@ export function useJamEngine() {
       reverb,
       delay,
       compressor,
+      analyser,
       drumSeq,
       chordLoop,
       leadSeq,
@@ -199,9 +206,22 @@ export function useJamEngine() {
     Tone.Transport.cancel();
     const n = nodesRef.current;
     if (n) {
-      [n.drumSeq, n.chordLoop, n.leadSeq, n.kick, n.hat, n.bass, n.pad, n.lead, n.delay, n.reverb, n.masterFilter, n.drumBus, n.compressor].forEach(
-        (node) => node.dispose()
-      );
+      [
+        n.drumSeq,
+        n.chordLoop,
+        n.leadSeq,
+        n.kick,
+        n.hat,
+        n.bass,
+        n.pad,
+        n.lead,
+        n.delay,
+        n.reverb,
+        n.masterFilter,
+        n.drumBus,
+        n.compressor,
+        n.analyser, // was missing — leaked an AnalyserNode on every stop/restart cycle
+      ].forEach((node) => node.dispose());
     }
     nodesRef.current = null;
     barIndexRef.current = 0;
@@ -225,5 +245,10 @@ export function useJamEngine() {
     });
   }, []);
 
-  return { isPlaying, params, start, stop, setParams };
+  // Exposes the live analyser node (or null when stopped) for a visualizer
+  // component to read each animation frame — not stored in React state
+  // since it updates ~60x/sec and would cause a re-render storm.
+  const getAnalyser = useCallback(() => nodesRef.current?.analyser ?? null, []);
+
+  return { isPlaying, params, start, stop, setParams, getAnalyser };
 }
