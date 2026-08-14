@@ -12,9 +12,23 @@ const createTrackSchema = z.object({
   durationSec: z.number().int().min(0).max(3600).optional(),
 });
 
+// Query param validation for pagination. Without this, `?page=abc` becomes
+// NaN after Number() coercion, which Prisma's `skip` rejects with a raw
+// 500 — this returns a clean 400 instead. Page is also capped: without a
+// ceiling, `?page=999999999` forces Postgres to walk and discard millions
+// of rows before returning anything, which is a real, easy DoS vector on
+// an unauthenticated GET route.
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).max(5000).optional().default(1),
+});
+
 // GET /tracks - global feed, paginated, newest first
 router.get("/", optionalAuth, async (req: AuthedRequest, res) => {
-  const page = Math.max(1, Number(req.query.page ?? 1));
+  const parsed = paginationSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid page parameter" });
+  }
+  const page = parsed.data.page;
   const pageSize = 20;
 
   const tracks = await prisma.track.findMany({
@@ -169,6 +183,9 @@ router.get("/:id/comments", async (req, res) => {
   const comments = await prisma.comment.findMany({
     where: { trackId: req.params.id },
     orderBy: { createdAt: "asc" },
+    // Capped — without this, a heavily-commented track forces the DB and
+    // this endpoint to return an unbounded result set on every page view.
+    take: 200,
     include: { user: { select: { username: true, displayName: true, avatarUrl: true } } },
   });
   return res.json({ comments });

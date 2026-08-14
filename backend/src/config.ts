@@ -26,4 +26,7 @@ export const config = {
   // instead of faking a result.
   aiExportApiKey: process.env.AI_EXPORT_API_KEY ?? null,
   aiExportProvider: process.env.AI_EXPORT_PROVIDER ?? null, // e.g. "suno" | "elevenlabs"
+  // Configurable so tests can use a short timeout instead of waiting out
+  // the real 30s production default on every "provider hangs" test case.
+  aiExportTimeoutMs: Number(process.env.AI_EXPORT_TIMEOUT_MS ?? 30_000),
 };

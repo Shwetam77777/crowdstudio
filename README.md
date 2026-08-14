@@ -178,20 +178,37 @@ history instead of just pushing the current schema.
   stricter — this is the endpoint most exposed to brute-force attempts),
   writes like posting tracks/comments (30/5min).
 - **Request size cap**: JSON bodies capped at 256kb to block oversized-payload abuse.
+- **Pagination guards**: `GET /tracks?page=` validates and caps the page
+  number (max 5000) — an unvalidated page param previously turned into
+  `NaN` on non-numeric input, which crashed Prisma's `skip` with a raw 500;
+  an unbounded page number let a caller force Postgres to walk and discard
+  millions of rows before returning anything.
+- **Result caps**: a track's comment list is capped at 200, a profile's
+  track list at 100 — without these, a heavily-used account or track forces
+  an unbounded query on every page view.
+- **AI export timeout**: the external provider call aborts after 30s
+  (configurable via `AI_EXPORT_TIMEOUT_MS`) instead of holding the request
+  open indefinitely if the provider hangs.
 - **Helmet**: standard security headers on every response.
-- **Central error handler**: maps Prisma errors (unique-constraint conflicts,
-  not-found) to clean 4xx JSON instead of leaking raw DB errors; malformed
-  JSON bodies get a clean 400 instead of crashing the request.
+- **Central error handler**: respects a pre-existing HTTP status on the
+  error (e.g. body-parser's 413 for oversized payloads, which previously
+  fell through to a generic 500), maps Prisma errors (unique-constraint
+  conflicts, not-found) to clean 4xx JSON instead of leaking raw DB errors,
+  and gives malformed JSON bodies a clean 400 instead of crashing the request.
 - **Graceful shutdown**: on SIGTERM/SIGINT, finishes in-flight requests and
   closes the DB connection pool cleanly before exiting (important for
   zero-downtime deploys on Render).
 - **Frontend error boundary**: a render crash anywhere in the app shows a
   recoverable "something broke, reload" screen instead of a blank white page.
 - **Socket reconnection**: the WebSocket client auto-reconnects (up to 10
-  attempts with backoff) and re-authenticates on reconnect; the navbar shows
-  "reconnecting…" instead of silently showing a stale/zero online count.
+  attempts with backoff) and re-authenticates on reconnect; the sidebar
+  shows "reconnecting…" instead of silently showing a stale/zero online count.
 - **Request timeouts**: frontend API calls time out after 10s instead of
   hanging forever on a stalled connection.
+- **Client-side validation**: form inputs mirror backend limits (username
+  pattern/length, track title/comment/export-prompt max length) so most
+  invalid input is caught before a round trip, while the backend remains
+  the source of truth (client-side limits are UX, not security).
 
 
 

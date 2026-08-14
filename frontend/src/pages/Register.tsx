@@ -52,6 +52,10 @@ export default function Register() {
           id="reg-username"
           name="username"
           autoComplete="username"
+          minLength={3}
+          maxLength={20}
+          pattern="[a-zA-Z0-9_]+"
+          title="Letters, numbers, and underscores only"
           className="mb-4 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 transition-colors focus:border-primary"
           value={username}
           onChange={(e) => setUsername(e.target.value)}

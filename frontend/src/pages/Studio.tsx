@@ -161,6 +161,7 @@ export default function Studio() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="My late-night jam"
+          maxLength={100}
         />
         {saveError && <p className="mb-3 text-sm text-alert" role="alert">{saveError}</p>}
         <button
@@ -188,6 +189,7 @@ export default function Studio() {
             name="exportPrompt"
             className="mb-3 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm transition-colors focus:border-primary"
             placeholder="Describe the vibe you want, e.g. 'dreamy lo-fi with soft vocals'"
+            maxLength={500}
             value={exportPrompt}
             onChange={(e) => setExportPrompt(e.target.value)}
           />

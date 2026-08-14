@@ -54,6 +54,18 @@ export function buildApp() {
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(err);
 
+    // Errors that already carry a real HTTP status (body-parser's
+    // "payload too large" is exactly this — status 413) were previously
+    // falling through to a generic 500 here, which is both the wrong
+    // status code and hides the actual, more useful error from the client.
+    const status = (err as { status?: unknown; statusCode?: unknown } | null)?.status ??
+      (err as { statusCode?: unknown } | null)?.statusCode;
+    if (typeof status === "number" && status >= 400 && status < 500) {
+      const rawMessage = err instanceof Error ? err.message : "Request error";
+      const message = status === 413 ? "Request body is too large (max 256kb)" : rawMessage;
+      return res.status(status).json({ error: message });
+    }
+
     // Prisma known-request errors (e.g. unique constraint violations that
     // slip past an application-level check under race conditions) get a
     // clean 409 instead of leaking a raw Prisma error message/stack.

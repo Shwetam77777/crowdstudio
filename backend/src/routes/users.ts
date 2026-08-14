@@ -23,6 +23,9 @@ router.get("/:username", async (req, res) => {
   const tracks = await prisma.track.findMany({
     where: { authorId: user.id },
     orderBy: { createdAt: "desc" },
+    // Capped for the same reason as the comments list — a prolific user's
+    // profile shouldn't force an unbounded query on every page view.
+    take: 100,
     include: { _count: { select: { likes: true, comments: true } } },
   });
 

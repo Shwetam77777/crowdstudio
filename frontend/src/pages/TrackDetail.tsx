@@ -131,6 +131,7 @@ export default function TrackDetail() {
               name="comment"
               className="mb-2 w-full rounded border border-paper/15 bg-bg/60 px-3 py-2 text-sm transition-colors focus:border-primary"
               rows={2}
+              maxLength={500}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment…"

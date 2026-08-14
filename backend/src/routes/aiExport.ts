@@ -46,17 +46,35 @@ router.post("/:trackId/export", requireAuth, async (req: AuthedRequest, res) => 
     if (!providerUrl) {
       throw new Error("AI_EXPORT_ENDPOINT is not set");
     }
-    const response = await fetch(providerUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.aiExportApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: parsed.data.prompt,
-        jamConfig: track.jamConfig,
-      }),
-    });
+
+    // Without a timeout, a hung provider ties up this request indefinitely
+    // — the client, this server's connection pool, and (worst case) other
+    // requests waiting behind it all pay for one bad upstream call.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), config.aiExportTimeoutMs);
+
+    let response: Response;
+    try {
+      response = await fetch(providerUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.aiExportApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: parsed.data.prompt,
+          jamConfig: track.jamConfig,
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      if (fetchErr instanceof Error && fetchErr.name === "AbortError") {
+        throw new Error("Provider did not respond within 30s");
+      }
+      throw fetchErr;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new Error(`Provider returned ${response.status}`);

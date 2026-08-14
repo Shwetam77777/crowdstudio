@@ -27,6 +27,26 @@ describe("GET /tracks", () => {
     expect(res.status).toBe(200);
     expect(res.body.tracks).toEqual([]);
   });
+
+  it("rejects a non-numeric page parameter instead of crashing with NaN", async () => {
+    const res = await request(app).get("/tracks?page=abc");
+    expect(res.status).toBe(400);
+    expect(mockPrisma.track.findMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a page number beyond the sane ceiling (load-handling guard)", async () => {
+    const res = await request(app).get("/tracks?page=999999999");
+    expect(res.status).toBe(400);
+  });
+
+  it("accepts a valid page number and computes the correct offset", async () => {
+    mockPrisma.track.findMany.mockResolvedValue([]);
+    const res = await request(app).get("/tracks?page=3");
+    expect(res.status).toBe(200);
+    expect(mockPrisma.track.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 40, take: 20 })
+    );
+  });
 });
 
 describe("POST /tracks", () => {
@@ -119,5 +139,75 @@ describe("404 handling", () => {
     const res = await request(app).get("/this-route-does-not-exist");
     expect(res.status).toBe(404);
     expect(res.body.error).toBe("Not found");
+  });
+});
+
+describe("GET /tracks/:id/comments", () => {
+  it("caps the result at 200 comments (load-handling guard)", async () => {
+    mockPrisma.comment.findMany.mockResolvedValue([]);
+    const res = await request(app).get("/tracks/t1/comments");
+    expect(res.status).toBe(200);
+    expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 200 })
+    );
+  });
+});
+
+describe("POST /tracks/:id/comments", () => {
+  it("requires authentication", async () => {
+    const res = await request(app).post("/tracks/t1/comments").send({ body: "nice jam" });
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects an empty comment", async () => {
+    const res = await request(app)
+      .post("/tracks/t1/comments")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ body: "" });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a comment over 500 characters", async () => {
+    const res = await request(app)
+      .post("/tracks/t1/comments")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ body: "x".repeat(501) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 for a comment on a nonexistent track", async () => {
+    mockPrisma.comment.create.mockRejectedValue(new Error("foreign key constraint"));
+    const res = await request(app)
+      .post("/tracks/does-not-exist/comments")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ body: "nice jam" });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("Input validation edge cases", () => {
+  it("rejects a track title over 100 characters", async () => {
+    const res = await request(app)
+      .post("/tracks")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ title: "x".repeat(101), jamConfig: {} });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a negative durationSec", async () => {
+    const res = await request(app)
+      .post("/tracks")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ title: "My jam", jamConfig: {}, durationSec: -5 });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an oversized request body instead of hanging (256kb cap)", async () => {
+    const hugeConfig = { blob: "x".repeat(300_000) };
+    const res = await request(app)
+      .post("/tracks")
+      .set("Authorization", `Bearer ${tokenFor("user1")}`)
+      .send({ title: "My jam", jamConfig: hugeConfig });
+    expect(res.status).toBe(413);
   });
 });
