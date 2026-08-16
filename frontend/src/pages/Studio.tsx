@@ -6,6 +6,7 @@ import { getSocket } from "../lib/socket";
 import { api, apiErrorMessage } from "../lib/api";
 import { VUMeter } from "../components/VUMeter";
 import { AudioVisualizer } from "../components/AudioVisualizer";
+import { ChatPanel } from "../components/ChatPanel";
 
 export default function Studio() {
   const { isPlaying, params, start, stop, setParams, getAnalyser } = useJamEngine();
@@ -150,6 +151,10 @@ export default function Studio() {
             suffix="%"
           />
         </div>
+      </div>
+
+      <div className="mb-6">
+        <ChatPanel />
       </div>
 
       <div className="channel-strip p-6">

@@ -20,9 +20,10 @@ found in both during audit.
 | Save jam as track | Real DB write, shows up in global feed |
 | Global feed | Real, paginated, DB-backed |
 | Likes / comments | Real, DB-backed, per-user |
-| Leaderboard | Real, DB-backed ranking by likes — **not** localStorage (old bug) |
+| Leaderboard | Real, DB-backed, time-decayed "hot" ranking — **not** raw like count (old bug) |
 | Online presence ("X jamming now") | Real WebSocket count — **not** a hardcoded random number (old bug) |
 | Live param sync between users | Real, via socket.io broadcast |
+| Jam room live chat | Real, jam-room-scoped (Socket.io rooms), rate-limited, 50-message history |
 | AI export | Calls a real configured provider API, or returns a clear "not configured" error — never fakes a result |
 
 ## Local setup
@@ -142,6 +143,30 @@ Being upfront about what this is and isn't:
   `Tone.Analyser` tapped off the actual mixed output — it's drawing the
   real signal, not a decorative animation, so if you don't hear anything
   the line will be flat too (useful for debugging audio issues).
+
+## Jam room chat and leaderboard ranking
+
+**Chat** (`socket/index.ts`, `components/ChatPanel.tsx`) is scoped to the
+jam room using real Socket.io rooms (`socket.join("jam-room")`) — a client
+can't receive messages just by listening for the event without actually
+joining, since the server enforces membership before broadcasting. It's
+rate-limited per socket (max 1 message / 500ms) with a clear error sent
+back to the sender when they're throttled, and keeps the last 50 messages
+in memory so someone joining mid-session gets context. This also fixed a
+real scoping bug in the pre-existing live jam-parameter sync: it was using
+`socket.broadcast.emit`, which sent slider changes to *every* connected
+socket including people sitting in the lobby, not just people actually in
+the jam room.
+
+**Leaderboard ranking** (`lib/ranking.ts`) uses a time-decayed "hot" score
+instead of raw like count. The old ordering had a classic rich-get-richer
+problem: a months-old track with hundreds of likes could never be
+outranked by a new, genuinely more-engaging track, since likes only
+accumulate and the board never "cools down." The score is
+`(likes*3 + plays) / (ageInHours + 2)^1.5` — the same style of decay
+Hacker News' ranking uses — computed over a bounded 300-track candidate
+pool fetched by raw like count (not a full table scan) and re-sorted in
+application code. Unit tested in `__tests__/ranking.test.ts`.
 
 ## Tests
 

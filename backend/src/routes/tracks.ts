@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db";
 import { requireAuth, optionalAuth, AuthedRequest } from "../middleware/auth";
+import { hotScore } from "../lib/ranking";
 
 const router = Router();
 
@@ -61,23 +62,45 @@ router.get("/", optionalAuth, async (req: AuthedRequest, res) => {
   return res.json({ tracks: shaped, page, pageSize });
 });
 
-// GET /tracks/leaderboard - real, DB-backed (replaces the old fake localStorage one)
+// GET /tracks/leaderboard - real, DB-backed, ranked by a time-decayed "hot"
+// score (see lib/ranking.ts) rather than raw like count, so new tracks can
+// actually surface instead of old ones permanently occupying the top spots.
 router.get("/leaderboard", async (_req, res) => {
-  const tracks = await prisma.track.findMany({
+  // Pull a candidate pool larger than the final list so the score-based
+  // re-rank has something real to work with, but still bounded — this
+  // isn't a full table scan. Ordering the initial fetch by likes desc
+  // means we're very unlikely to miss a track that could plausibly end up
+  // in the top 50 after decay (a track with few likes and enormous decay
+  // was never going to make the cut anyway).
+  const candidates = await prisma.track.findMany({
     orderBy: [{ likes: { _count: "desc" } }, { playCount: "desc" }],
-    take: 50,
+    take: 300,
     include: {
       author: { select: { username: true, displayName: true, avatarUrl: true } },
       _count: { select: { likes: true } },
     },
   });
-  return res.json({
-    leaderboard: tracks.map((t, i) => ({
-      rank: i + 1,
+
+  const now = new Date();
+  const ranked = candidates
+    .map((t) => ({
       trackId: t.id,
       title: t.title,
       author: t.author,
       likeCount: t._count.likes,
+      playCount: t.playCount,
+      score: hotScore(t._count.likes, t.playCount, t.createdAt, now),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 50);
+
+  return res.json({
+    leaderboard: ranked.map((t, i) => ({
+      rank: i + 1,
+      trackId: t.trackId,
+      title: t.title,
+      author: t.author,
+      likeCount: t.likeCount,
       playCount: t.playCount,
     })),
   });

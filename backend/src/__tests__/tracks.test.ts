@@ -124,6 +124,7 @@ describe("GET /tracks/leaderboard", () => {
         id: "t1",
         title: "Top jam",
         playCount: 5,
+        createdAt: new Date(),
         author: { username: "alice", displayName: "Alice" },
         _count: { likes: 10 },
       },
@@ -131,6 +132,40 @@ describe("GET /tracks/leaderboard", () => {
     const res = await request(app).get("/tracks/leaderboard");
     expect(res.status).toBe(200);
     expect(res.body.leaderboard[0]).toMatchObject({ rank: 1, likeCount: 10 });
+  });
+
+  it("ranks a fresh track above an old track with more raw likes (hot-score, not raw count)", async () => {
+    const now = new Date();
+    const monthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    mockPrisma.track.findMany.mockResolvedValue([
+      {
+        id: "old",
+        title: "Old Popular",
+        playCount: 1000,
+        createdAt: monthsAgo,
+        author: { username: "alice", displayName: "Alice" },
+        _count: { likes: 500 },
+      },
+      {
+        id: "fresh",
+        title: "Fresh Trending",
+        playCount: 20,
+        createdAt: now,
+        author: { username: "bob", displayName: "Bob" },
+        _count: { likes: 40 },
+      },
+    ]);
+    const res = await request(app).get("/tracks/leaderboard");
+    expect(res.status).toBe(200);
+    expect(res.body.leaderboard[0].trackId).toBe("fresh");
+    expect(res.body.leaderboard[1].trackId).toBe("old");
+  });
+
+  it("still returns clean results with zero candidates", async () => {
+    mockPrisma.track.findMany.mockResolvedValue([]);
+    const res = await request(app).get("/tracks/leaderboard");
+    expect(res.status).toBe(200);
+    expect(res.body.leaderboard).toEqual([]);
   });
 });
 
