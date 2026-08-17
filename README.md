@@ -24,6 +24,8 @@ found in both during audit.
 | Online presence ("X jamming now") | Real WebSocket count — **not** a hardcoded random number (old bug) |
 | Live param sync between users | Real, via socket.io broadcast |
 | Jam room live chat | Real, jam-room-scoped (Socket.io rooms), rate-limited, 50-message history |
+| Live audience voting (🔥/🎶) | Real, per-track WebSocket room, live "who's winning" bar |
+| Per-instrument mixer | Real Tone.Volume nodes per channel — drums/bass/pads/lead each have a live volume fader + mute |
 | AI export | Calls a real configured provider API, or returns a clear "not configured" error — never fakes a result |
 
 ## Local setup
@@ -167,6 +169,25 @@ accumulate and the board never "cools down." The score is
 Hacker News' ranking uses — computed over a bounded 300-track candidate
 pool fetched by raw like count (not a full table scan) and re-sorted in
 application code. Unit tested in `__tests__/ranking.test.ts`.
+
+## Live voting and the per-instrument mixer
+
+**Live voting** (`hooks/useLiveReactions.ts`, `components/LiveVoting.tsx`)
+lets everyone currently viewing a track fire off 🔥 or 🎶 reactions in
+real time — a per-track Socket.io room, rate-limited per socket (300ms),
+with counts and a live "who's winning" split bar. This is deliberately
+**not** persisted to the database: it's an ephemeral "how is the room
+feeling right now" signal, distinct from the permanent, DB-backed Like
+that actually drives leaderboard ranking. In-memory reaction state for a
+track is cleaned up once nobody is left viewing it, so this doesn't leak
+memory over the life of a long-running server.
+
+**Per-instrument mixer** (Studio page) gives each of the four arrangement
+parts — drums, bass, pads, lead — a real volume fader and mute button,
+wired to an actual `Tone.Volume` node inserted into that instrument's
+signal chain (not a cosmetic slider). This is what "editing" the live
+arrangement actually means here: you can mute the drums, bring the lead
+down, etc., while it's playing.
 
 ## Tests
 

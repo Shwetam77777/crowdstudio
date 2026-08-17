@@ -36,6 +36,18 @@ export const DEFAULT_JAM_PARAMS: JamParams = {
   energy: 0.6,
 };
 
+export type MixerChannel = "drums" | "bass" | "pads" | "lead";
+
+export interface MixerState {
+  volume: Record<MixerChannel, number>; // dB, roughly -40 (near-silent) to 0 (unity)
+  muted: Record<MixerChannel, boolean>;
+}
+
+export const DEFAULT_MIXER: MixerState = {
+  volume: { drums: -6, bass: -6, pads: -14, lead: -8 },
+  muted: { drums: false, bass: false, pads: false, lead: false },
+};
+
 /** Resolves a scale-degree index (can exceed the scale length, wrapping up
  * an octave) to an absolute note, staying diatonic instead of using fixed
  * semitone intervals — this is what keeps chords in key. */
@@ -69,6 +81,11 @@ interface EngineNodes {
   drumSeq: Tone.Sequence;
   chordLoop: Tone.Loop;
   leadSeq: Tone.Sequence;
+  // One Tone.Volume per mixer channel — this is what the Studio's mixing
+  // dashboard actually controls (fader + mute), kept separate from each
+  // synth's own internal `.volume` (used only for fixed internal balance,
+  // e.g. hats sitting quieter than the kick within the "drums" channel).
+  channels: Record<MixerChannel, Tone.Volume>;
 }
 
 /**
@@ -86,6 +103,7 @@ interface EngineNodes {
 export function useJamEngine() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [params, setParamsState] = useState<JamParams>(DEFAULT_JAM_PARAMS);
+  const [mixer, setMixerState] = useState<MixerState>(DEFAULT_MIXER);
   const nodesRef = useRef<EngineNodes | null>(null);
   const barIndexRef = useRef(0);
   const currentChordRef = useRef<string[]>([]);
@@ -95,6 +113,11 @@ export function useJamEngine() {
   // being silently ignored until the jam is stopped and restarted.
   const paramsRef = useRef(params);
   paramsRef.current = params;
+  // Read at start() time to set each channel's initial volume/mute — kept
+  // as a ref (not read from state directly in start's closure) so mixer
+  // adjustments made *before* pressing Start still take effect.
+  const mixerRef = useRef(mixer);
+  mixerRef.current = mixer;
 
   const start = useCallback(async () => {
     if (isPlaying) return;
@@ -110,29 +133,41 @@ export function useJamEngine() {
     const reverb = new Tone.Reverb({ decay: 3.2, wet: params.reverbWet }).connect(masterFilter);
     const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.18 }).connect(reverb);
 
-    const drumBus = new Tone.Filter(8000, "lowpass").connect(compressor);
+    const drumBus = new Tone.Filter(8000, "lowpass");
+    const drumChannel = new Tone.Volume(mixerRef.current.volume.drums).connect(compressor);
+    drumBus.connect(drumChannel);
     const kick = new Tone.MembraneSynth({ octaves: 4, pitchDecay: 0.05 }).connect(drumBus);
     const hat = new Tone.NoiseSynth({
       noise: { type: "white" },
       envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
     }).connect(drumBus);
-    hat.volume.value = -18;
+    hat.volume.value = -12; // balance relative to kick, within the shared drums channel
 
+    const bassChannel = new Tone.Volume(mixerRef.current.volume.bass).connect(reverb);
     const bass = new Tone.MonoSynth({
       oscillator: { type: "triangle" },
       envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.4 },
-    }).connect(reverb);
-    bass.volume.value = -6;
+    }).connect(bassChannel);
 
+    const padChannel = new Tone.Volume(mixerRef.current.volume.pads).connect(reverb);
     const pad = new Tone.PolySynth(Tone.FMSynth, {
       envelope: { attack: 0.6, decay: 0.3, sustain: 0.6, release: 1.5 },
-    }).connect(reverb);
-    pad.volume.value = -14;
+    }).connect(padChannel);
 
+    const leadChannel = new Tone.Volume(mixerRef.current.volume.lead).connect(delay);
     const lead = new Tone.PolySynth(Tone.Synth, {
       envelope: { attack: 0.01, decay: 0.2, sustain: 0.15, release: 0.4 },
-    }).connect(delay);
-    lead.volume.value = -8;
+    }).connect(leadChannel);
+
+    const channels: Record<MixerChannel, Tone.Volume> = {
+      drums: drumChannel,
+      bass: bassChannel,
+      pads: padChannel,
+      lead: leadChannel,
+    };
+    for (const ch of Object.keys(channels) as MixerChannel[]) {
+      channels[ch].mute = mixerRef.current.muted[ch];
+    }
 
     Tone.Transport.bpm.value = params.tempo;
     barIndexRef.current = 0;
@@ -195,6 +230,7 @@ export function useJamEngine() {
       drumSeq,
       chordLoop,
       leadSeq,
+      channels,
     };
 
     Tone.Transport.start();
@@ -221,6 +257,7 @@ export function useJamEngine() {
         n.drumBus,
         n.compressor,
         n.analyser, // was missing — leaked an AnalyserNode on every stop/restart cycle
+        ...Object.values(n.channels),
       ].forEach((node) => node.dispose());
     }
     nodesRef.current = null;
@@ -250,5 +287,32 @@ export function useJamEngine() {
   // since it updates ~60x/sec and would cause a re-render storm.
   const getAnalyser = useCallback(() => nodesRef.current?.analyser ?? null, []);
 
-  return { isPlaying, params, start, stop, setParams, getAnalyser };
+  const setChannelVolume = useCallback((channel: MixerChannel, db: number) => {
+    setMixerState((prev) => {
+      const n = nodesRef.current;
+      if (n) n.channels[channel].volume.rampTo(db, 0.1);
+      return { ...prev, volume: { ...prev.volume, [channel]: db } };
+    });
+  }, []);
+
+  const toggleChannelMute = useCallback((channel: MixerChannel) => {
+    setMixerState((prev) => {
+      const next = !prev.muted[channel];
+      const n = nodesRef.current;
+      if (n) n.channels[channel].mute = next;
+      return { ...prev, muted: { ...prev.muted, [channel]: next } };
+    });
+  }, []);
+
+  return {
+    isPlaying,
+    params,
+    start,
+    stop,
+    setParams,
+    getAnalyser,
+    mixer,
+    setChannelVolume,
+    toggleChannelMute,
+  };
 }

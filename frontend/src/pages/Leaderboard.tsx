@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Trophy, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Trophy, Heart, Flame } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 
 interface Entry {
@@ -28,7 +29,8 @@ export default function Leaderboard() {
         <Trophy className="text-primary" size={26} /> Leaderboard
       </h1>
       <p className="mb-6 text-sm text-muted">
-        Real, global, database-backed — not per-browser localStorage.
+        Ranked by a live, time-decayed "hot" score — not just raw likes, so trending tracks can
+        actually surface instead of old favorites freezing the board.
       </p>
       {error && <p className="mb-4 font-mono text-sm text-alert">{error}</p>}
       {!error && entries.length === 0 && (
@@ -38,23 +40,30 @@ export default function Leaderboard() {
       )}
       <ol className="space-y-2">
         {entries.map((e) => (
-          <li key={e.trackId} className="channel-strip flex items-center justify-between px-4 py-3">
-            <span className="flex min-w-0 items-center gap-3">
-              <span
-                className={`w-6 shrink-0 font-mono text-sm ${
-                  e.rank <= 3 ? "text-primary" : "text-muted"
-                }`}
-              >
-                #{e.rank}
+          <li key={e.trackId}>
+            <Link
+              to={`/tracks/${e.trackId}`}
+              className={`channel-strip flex items-center justify-between px-4 py-3 transition-colors hover:border-primary/40 ${
+                e.rank === 1 ? "border-primary/50" : ""
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span
+                  className={`flex w-6 shrink-0 items-center font-mono text-sm ${
+                    e.rank <= 3 ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  {e.rank === 1 ? <Flame size={16} className="fill-primary" /> : `#${e.rank}`}
+                </span>
+                <span className="truncate text-paper">{e.title}</span>
+                <span className="hidden shrink-0 text-sm text-muted sm:inline">
+                  by {e.author.displayName ?? e.author.username}
+                </span>
               </span>
-              <span className="truncate text-paper">{e.title}</span>
-              <span className="hidden shrink-0 text-sm text-muted sm:inline">
-                by {e.author.displayName ?? e.author.username}
+              <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
+                <Heart size={13} fill="currentColor" /> {e.likeCount}
               </span>
-            </span>
-            <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
-              <Heart size={13} fill="currentColor" /> {e.likeCount}
-            </span>
+            </Link>
           </li>
         ))}
       </ol>

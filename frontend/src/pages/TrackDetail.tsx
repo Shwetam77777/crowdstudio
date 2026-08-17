@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Heart, PlayCircle, Send } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
+import { LiveVoting } from "../components/LiveVoting";
 
 interface Track {
   id: string;
@@ -107,6 +108,10 @@ export default function TrackDetail() {
         {track.aiExportStatus === "failed" && (
           <p className="mt-4 text-sm text-alert">AI export failed — try again from the studio.</p>
         )}
+      </div>
+
+      <div className="mb-6">
+        <LiveVoting trackId={track.id} />
       </div>
 
       <div className="channel-strip p-6">

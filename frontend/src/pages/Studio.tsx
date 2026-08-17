@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Play, Square, Save, Sparkles, Music2, Drum, Waves } from "lucide-react";
-import { useJamEngine } from "../hooks/useJamEngine";
+import { Play, Square, Save, Sparkles, Music2, Drum, Waves, Volume2, VolumeX } from "lucide-react";
+import { useJamEngine, type MixerChannel } from "../hooks/useJamEngine";
 import { usePresence } from "../hooks/usePresence";
 import { getSocket } from "../lib/socket";
 import { api, apiErrorMessage } from "../lib/api";
@@ -9,7 +9,8 @@ import { AudioVisualizer } from "../components/AudioVisualizer";
 import { ChatPanel } from "../components/ChatPanel";
 
 export default function Studio() {
-  const { isPlaying, params, start, stop, setParams, getAnalyser } = useJamEngine();
+  const { isPlaying, params, start, stop, setParams, getAnalyser, mixer, setChannelVolume, toggleChannelMute } =
+    useJamEngine();
   const presence = usePresence();
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -86,14 +87,50 @@ export default function Studio() {
         <AudioVisualizer getAnalyser={getAnalyser} active={isPlaying} />
       </div>
 
-      {/* Live arrangement meters — a real (if simplified) reflection of the
-          four parts actually playing: drums, bass, pads, lead. Gives
-          feedback that this is a full arrangement, not one lonely loop. */}
+      {/* Real mixing dashboard — each channel has its own volume fader and
+          mute button wired to an actual Tone.Volume node in the signal
+          chain, not just a decorative meter. */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <ChannelMeter icon={<Drum size={16} />} label="Drums" active={isPlaying} />
-        <ChannelMeter icon={<Waves size={16} />} label="Bass" active={isPlaying} />
-        <ChannelMeter icon={<Music2 size={16} />} label="Pads" active={isPlaying} />
-        <ChannelMeter icon={<Sparkles size={16} />} label="Lead" active={isPlaying} />
+        <MixerStrip
+          icon={<Drum size={16} />}
+          label="Drums"
+          channel="drums"
+          active={isPlaying}
+          db={mixer.volume.drums}
+          muted={mixer.muted.drums}
+          onVolumeChange={setChannelVolume}
+          onToggleMute={toggleChannelMute}
+        />
+        <MixerStrip
+          icon={<Waves size={16} />}
+          label="Bass"
+          channel="bass"
+          active={isPlaying}
+          db={mixer.volume.bass}
+          muted={mixer.muted.bass}
+          onVolumeChange={setChannelVolume}
+          onToggleMute={toggleChannelMute}
+        />
+        <MixerStrip
+          icon={<Music2 size={16} />}
+          label="Pads"
+          channel="pads"
+          active={isPlaying}
+          db={mixer.volume.pads}
+          muted={mixer.muted.pads}
+          onVolumeChange={setChannelVolume}
+          onToggleMute={toggleChannelMute}
+        />
+        <MixerStrip
+          icon={<Sparkles size={16} />}
+          label="Lead"
+          channel="lead"
+          active={isPlaying}
+          db={mixer.volume.lead}
+          muted={mixer.muted.lead}
+          onVolumeChange={setChannelVolume}
+          onToggleMute={toggleChannelMute}
+        />
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -215,12 +252,50 @@ export default function Studio() {
   );
 }
 
-function ChannelMeter({ icon, label, active }: { icon: ReactNode; label: string; active: boolean }) {
+function MixerStrip({
+  icon,
+  label,
+  channel,
+  active,
+  db,
+  muted,
+  onVolumeChange,
+  onToggleMute,
+}: {
+  icon: ReactNode;
+  label: string;
+  channel: MixerChannel;
+  active: boolean;
+  db: number;
+  muted: boolean;
+  onVolumeChange: (channel: MixerChannel, db: number) => void;
+  onToggleMute: (channel: MixerChannel) => void;
+}) {
+  const isAudible = active && !muted;
   return (
     <div className="channel-strip flex flex-col items-center gap-2 py-4">
-      <span className={active ? "text-primary" : "text-muted"}>{icon}</span>
-      <VUMeter active={active} bars={5} />
+      <span className={isAudible ? "text-primary" : "text-muted"}>{icon}</span>
+      <VUMeter active={isAudible} bars={5} />
       <span className="font-mono text-xs text-muted">{label}</span>
+      <label htmlFor={`vol-${channel}`} className="sr-only">{label} volume</label>
+      <input
+        id={`vol-${channel}`}
+        name={`vol-${channel}`}
+        type="range"
+        min={-40}
+        max={0}
+        value={db}
+        disabled={muted}
+        onChange={(e) => onVolumeChange(channel, Number(e.target.value))}
+        className="w-full accent-primary disabled:opacity-30"
+      />
+      <button
+        onClick={() => onToggleMute(channel)}
+        title={muted ? `Unmute ${label}` : `Mute ${label}`}
+        className={`rounded p-1 transition-colors ${muted ? "text-alert" : "text-muted hover:text-primary"}`}
+      >
+        {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+      </button>
     </div>
   );
 }
