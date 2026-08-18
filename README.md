@@ -1,16 +1,14 @@
 # CrowdStudio
 
 <div align="center">
-  <h3>A Real-Time Collaborative Music Jamming Platform & DAW Studio</h3>
-
-  <img src="https://img.shields.io/badge/CrowdStudio-Production_Ready-E8A33D?style=for-the-badge&logo=speaker&logoColor=white" alt="CrowdStudio Banner" />
+  <img src="docs/logo.svg" alt="CrowdStudio Vibrant SVG Logo" width="700" />
   <br/><br/>
   
-  <img src="https://img.shields.io/badge/Gate_1:_Audio_Engine-Tone.js_DSP-4FB8A6?style=flat-square" alt="Audio Engine Gate" />
-  <img src="https://img.shields.io/badge/Gate_2:_Sockets-Scoped_Rooms-E8A33D?style=flat-square" alt="Sockets Gate" />
-  <img src="https://img.shields.io/badge/Gate_3:_Ranking-Time_Decay-4FB8A6?style=flat-square" alt="Ranking Gate" />
-  <img src="https://img.shields.io/badge/Gate_4:_Security-Rate_Limited-C1543A?style=flat-square" alt="Security Gate" />
-  <img src="https://img.shields.io/badge/Gate_5:_CI/CD-GitHub_Actions_PASSED-4FB8A6?style=flat-square" alt="CI/CD Gate" />
+  <img src="https://img.shields.io/badge/Gate_1:_Audio_Engine-Tone.js_DSP-4FB8A6?style=for-the-badge&logo=speaker&logoColor=white" alt="Audio Engine Gate" />
+  <img src="https://img.shields.io/badge/Gate_2:_Sockets-Scoped_Rooms-E8A33D?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Sockets Gate" />
+  <img src="https://img.shields.io/badge/Gate_3:_Ranking-Time_Decay-4FB8A6?style=for-the-badge&logo=postgresql&logoColor=white" alt="Ranking Gate" />
+  <img src="https://img.shields.io/badge/Gate_4:_Security-Rate_Limited-C1543A?style=for-the-badge&logo=express&logoColor=white" alt="Security Gate" />
+  <img src="https://img.shields.io/badge/Gate_5:_CI/CD-GitHub_Actions_PASSED-4FB8A6?style=for-the-badge&logo=render&logoColor=white" alt="CI/CD Gate" />
 </div>
 
 ---
