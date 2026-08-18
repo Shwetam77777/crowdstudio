@@ -4,15 +4,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "#0E0C15",        // Deep Midnight Obsidian
-        surface: "#161324",   // Glassmorphic Violet Panel
-        panel: "#1E1A34",     // DAW Channel Strip Body
-        primary: "#FF9F43",   // Electric Amber Accent
-        accent: "#00F2FE",    // Neon Cyan Signal Accent
-        neon: "#E100FF",      // Magenta Audio Pulse Accent
-        alert: "#FF4D4D",     // High-Visibility Error Red
-        paper: "#F8F9FE",     // Crisp Bright Text
-        muted: "#A09DBA",     // Sleek Muted Violet Gray
+        bg: "#050508",        // Pure Pitch Black
+        surface: "#0D0D14",   // Deep Obsidian Card
+        panel: "#14141F",     // Sleek Studio Console Strip
+        primary: "#FFAB00",   // Vibrant Gold Accent
+        accent: "#00F2FE",    // Electric Neon Cyan
+        neon: "#BD00FF",      // Electric Neon Magenta
+        alert: "#FF3B30",     // Bright Red Error
+        paper: "#FFFFFF",     // Pure Crisp White
+        muted: "#8E8EA8",     // Sleek Slate Gray
       },
       fontFamily: {
         display: ["Space Grotesk", "sans-serif"],
@@ -20,10 +20,10 @@ export default {
         mono: ["IBM Plex Mono", "monospace"],
       },
       boxShadow: {
-        glow: "0 0 20px rgba(0, 242, 254, 0.35)",
-        amberGlow: "0 0 20px rgba(255, 159, 67, 0.4)",
-        magentaGlow: "0 0 20px rgba(225, 0, 255, 0.35)",
-        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        glow: "0 0 25px rgba(0, 242, 254, 0.4)",
+        amberGlow: "0 0 25px rgba(255, 171, 0, 0.4)",
+        magentaGlow: "0 0 25px rgba(189, 0, 255, 0.4)",
+        glass: "0 10px 40px 0 rgba(0, 0, 0, 0.8)",
       },
     },
   },
