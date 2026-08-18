@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, Heart, Flame } from "lucide-react";
+import { Trophy, Heart, Flame, PlayCircle } from "lucide-react";
 import { api, apiErrorMessage } from "../lib/api";
 
 interface Entry {
@@ -24,45 +24,70 @@ export default function Leaderboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="mb-1 flex items-center gap-2 font-display text-2xl font-semibold text-primary sm:text-3xl">
-        <Trophy className="text-primary" size={26} /> Leaderboard
-      </h1>
-      <p className="mb-6 text-sm text-muted">
-        Ranked by a live, time-decayed "hot" score — not just raw likes, so trending tracks can
-        actually surface instead of old favorites freezing the board.
-      </p>
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="glass-card mb-8 p-6">
+        <h1 className="mb-2 flex items-center gap-3 font-display text-3xl font-extrabold text-paper">
+          <Trophy className="text-primary" size={32} /> Hot Track <span className="neon-text-amber">Leaderboard</span>
+        </h1>
+        <p className="text-sm text-muted leading-relaxed">
+          Ranked by a time-decayed hot score — (likes × 3 + plays) / (age + 2)^1.5 — so fresh trending tracks can surface to #1!
+        </p>
+      </div>
+
       {error && <p className="mb-4 font-mono text-sm text-alert">{error}</p>}
       {!error && entries.length === 0 && (
-        <div className="channel-strip p-8 text-center text-sm text-muted">
-          No ranked tracks yet — the first saved jam takes the top spot.
+        <div className="glass-card p-10 text-center text-sm text-muted">
+          No ranked tracks yet — the first saved jam takes the top spot!
         </div>
       )}
-      <ol className="space-y-2">
+
+      <ol className="space-y-3">
         {entries.map((e) => (
           <li key={e.trackId}>
             <Link
               to={`/tracks/${e.trackId}`}
-              className={`channel-strip flex items-center justify-between px-4 py-3 transition-colors hover:border-primary/40 ${
-                e.rank === 1 ? "border-primary/50" : ""
+              className={`glass-card flex items-center justify-between p-4 transition-all ${
+                e.rank === 1
+                  ? "border-primary/60 bg-gradient-to-r from-primary/10 to-transparent shadow-amberGlow"
+                  : e.rank === 2
+                  ? "border-accent/40 bg-gradient-to-r from-accent/10 to-transparent"
+                  : e.rank === 3
+                  ? "border-neon/40 bg-gradient-to-r from-neon/10 to-transparent"
+                  : ""
               }`}
             >
-              <span className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 items-center gap-4">
                 <span
-                  className={`flex w-6 shrink-0 items-center font-mono text-sm ${
-                    e.rank <= 3 ? "text-primary" : "text-muted"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-bold ${
+                    e.rank === 1
+                      ? "bg-primary text-bg shadow-amberGlow"
+                      : e.rank === 2
+                      ? "bg-accent text-bg shadow-glow"
+                      : e.rank === 3
+                      ? "bg-neon text-white"
+                      : "bg-surface/80 text-muted border border-white/10"
                   }`}
                 >
-                  {e.rank === 1 ? <Flame size={16} className="fill-primary" /> : `#${e.rank}`}
+                  {e.rank === 1 ? <Flame size={18} /> : `#${e.rank}`}
                 </span>
-                <span className="truncate text-paper">{e.title}</span>
-                <span className="hidden shrink-0 text-sm text-muted sm:inline">
-                  by {e.author.displayName ?? e.author.username}
+                <div className="truncate">
+                  <span className="block truncate font-bold text-paper text-base group-hover:text-accent">
+                    {e.title}
+                  </span>
+                  <span className="text-xs text-muted">
+                    by <span className="text-accent font-semibold">{e.author.displayName ?? e.author.username}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-4 font-mono text-sm">
+                <span className="flex items-center gap-1 text-muted text-xs">
+                  <PlayCircle size={14} /> {e.playCount}
                 </span>
-              </span>
-              <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
-                <Heart size={13} fill="currentColor" /> {e.likeCount}
-              </span>
+                <span className="flex items-center gap-1 font-bold text-alert">
+                  <Heart size={14} fill="currentColor" /> {e.likeCount}
+                </span>
+              </div>
             </Link>
           </li>
         ))}

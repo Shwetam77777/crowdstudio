@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
-import { RequireAuth } from "./components/RequireAuth";
 import { useAuthStore } from "./stores/authStore";
 import Feed from "./pages/Feed";
 import Login from "./pages/Login";
@@ -31,14 +30,7 @@ export default function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/tracks/:id" element={<TrackDetail />} />
           <Route path="/profile/:username" element={<Profile />} />
-          <Route
-            path="/studio"
-            element={
-              <RequireAuth>
-                <Studio />
-              </RequireAuth>
-            }
-          />
+          <Route path="/studio" element={<Studio />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>

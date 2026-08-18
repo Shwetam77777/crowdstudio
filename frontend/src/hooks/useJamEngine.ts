@@ -81,7 +81,7 @@ interface EngineNodes {
   pad: Tone.PolySynth;
   lead: Tone.PolySynth;
   masterFilter: Tone.Filter;
-  reverb: Tone.Reverb;
+  reverb: Tone.Freeverb;
   delay: Tone.FeedbackDelay;
   compressor: Tone.Compressor;
   analyser: Tone.Analyser;
@@ -137,7 +137,7 @@ export function useJamEngine() {
     const analyser = new Tone.Analyser("waveform", 256);
     compressor.connect(analyser);
     const masterFilter = new Tone.Filter(params.filterCutoff, "lowpass").connect(compressor);
-    const reverb = new Tone.Reverb({ decay: 3.2, wet: params.reverbWet }).connect(masterFilter);
+    const reverb = new Tone.Freeverb({ roomSize: 0.7, dampening: 3000, wet: params.reverbWet }).connect(masterFilter);
     const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.18 }).connect(reverb);
 
     const drumBus = new Tone.Filter(8000, "lowpass");
