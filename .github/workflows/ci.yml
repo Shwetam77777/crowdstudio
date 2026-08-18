@@ -18,9 +18,9 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: crowdjam
-          POSTGRES_PASSWORD: crowdjam
-          POSTGRES_DB: crowdjam_test
+          POSTGRES_USER: crowdstudio
+          POSTGRES_PASSWORD: crowdstudio
+          POSTGRES_DB: crowdstudio_test
         ports:
           - 5432:5432
         options: >-
@@ -30,7 +30,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql://crowdjam:crowdjam@localhost:5432/crowdjam_test
+      DATABASE_URL: postgresql://crowdstudio:crowdstudio@localhost:5432/crowdstudio_test
       JWT_SECRET: ci-test-secret-not-for-production
       CORS_ORIGIN: http://localhost:5173
 

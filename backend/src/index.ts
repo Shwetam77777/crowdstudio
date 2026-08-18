@@ -39,9 +39,9 @@ export function buildApp() {
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
   app.use("/auth", authLimiter, authRoutes);
-  app.use("/tracks", writeLimiter, trackRoutes);
-  app.use("/tracks", writeLimiter, aiExportRoutes);
-  app.use("/users", writeLimiter, userRoutes);
+  app.use("/tracks", trackRoutes);
+  app.use("/tracks", aiExportRoutes);
+  app.use("/users", userRoutes);
 
   // 404 for anything unmatched — without this, unknown routes fall through
   // to Express's default HTML error page instead of a clean JSON response.
@@ -99,7 +99,7 @@ if (require.main === module) {
   attachSocket(httpServer);
 
   httpServer.listen(config.port, () => {
-    console.log(`CrowdJam backend listening on :${config.port} (${config.nodeEnv})`);
+    console.log(`CrowdStudio backend listening on :${config.port} (${config.nodeEnv})`);
   });
 
   // Graceful shutdown — finish in-flight requests and close the DB pool

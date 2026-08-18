@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Play, Square, Save, Sparkles, Music2, Drum, Waves, Volume2, VolumeX } from "lucide-react";
-import { useJamEngine, type MixerChannel } from "../hooks/useJamEngine";
+import { useJamEngine, SOUND_PRESETS, type MixerChannel } from "../hooks/useJamEngine";
 import { usePresence } from "../hooks/usePresence";
 import { getSocket } from "../lib/socket";
 import { api, apiErrorMessage } from "../lib/api";
@@ -131,6 +131,24 @@ export default function Studio() {
           onVolumeChange={setChannelVolume}
           onToggleMute={toggleChannelMute}
         />
+      </div>
+
+      {/* Sound Presets bar */}
+      <div className="channel-strip mb-6 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-mono text-xs uppercase tracking-widest text-muted">Sound Presets</span>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(SOUND_PRESETS).map(([name, preset]) => (
+              <button
+                key={name}
+                onClick={() => setParams(preset)}
+                className="rounded border border-paper/15 bg-bg/40 px-3 py-1 text-xs text-paper transition-all hover:border-primary hover:text-primary active:scale-95"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">

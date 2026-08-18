@@ -25,18 +25,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isLoading: true,
   setAuth: (user, token) => {
-    localStorage.setItem("crowdjam_token", token);
-    localStorage.setItem("crowdjam_user", JSON.stringify(user));
+    localStorage.setItem("crowdstudio_token", token);
+    localStorage.setItem("crowdstudio_user", JSON.stringify(user));
     set({ user, token, isLoading: false });
   },
   logout: () => {
+    localStorage.removeItem("crowdstudio_token");
+    localStorage.removeItem("crowdstudio_user");
     localStorage.removeItem("crowdjam_token");
     localStorage.removeItem("crowdjam_user");
     set({ user: null, token: null, isLoading: false });
   },
   hydrate: () => {
-    const token = localStorage.getItem("crowdjam_token");
-    const userRaw = localStorage.getItem("crowdjam_user");
+    const token = localStorage.getItem("crowdstudio_token") || localStorage.getItem("crowdjam_token");
+    const userRaw = localStorage.getItem("crowdstudio_user") || localStorage.getItem("crowdjam_user");
     if (token && userRaw) {
       try {
         const user = JSON.parse(userRaw) as User;
@@ -46,6 +48,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         // corrupted storage, fall through to clear
       }
     }
+    localStorage.removeItem("crowdstudio_token");
+    localStorage.removeItem("crowdstudio_user");
     localStorage.removeItem("crowdjam_token");
     localStorage.removeItem("crowdjam_user");
     set({ user: null, token: null, isLoading: false });

@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mb-8 flex items-center gap-2 px-2">
           <Radio className="text-primary" size={22} />
           <span className="font-display text-lg font-semibold tracking-tight text-paper">
-            CrowdJam
+            CrowdStudio
           </span>
         </div>
 
@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="glass flex items-center justify-between px-4 py-3 sm:hidden">
           <NavLink to="/" className="flex items-center gap-2 font-display text-lg font-semibold text-primary">
             <Radio size={20} />
-            CrowdJam
+            CrowdStudio
           </NavLink>
           <div className="flex items-center gap-3 text-sm">
             <NavLink to="/leaderboard" className="text-muted">
